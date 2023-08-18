@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define BULLETS_MAX_COUNT 100
+#define BULLET_SPEED 10.0f
+
 typedef enum {
   NORTH,
   NORTH_EAST,
@@ -30,6 +33,7 @@ typedef struct {
   Vector2 position;
   Direction direction;
   float speed;
+  bool onScreen;
 } Bullet;
 
 typedef struct {
@@ -37,18 +41,196 @@ typedef struct {
   int height;
 } World;
 
-Bullet *shootBullet(Actor *player) {
-  Bullet *bullet = malloc(sizeof(Bullet));
-  bullet->position = player->position;
-  bullet->direction = player->direction;
-  bullet->speed = 10.0f;
-  return bullet;
+void ShootBullet(Bullet bullets[], Actor *shooter) {
+  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
+    if (!bullets[i].onScreen) {
+      bullets[i].onScreen = true;
+      bullets[i].direction = shooter->direction;
+      bullets[i].position = shooter->position;
+      bullets[i].speed = BULLET_SPEED;
+      break;
+    }
+  }
+}
+
+void UpdateBullets(Bullet bullets[], World *world) {
+  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
+    switch (bullets[i].direction) {
+    case NORTH:
+      bullets[i].position.y -= bullets[i].speed;
+      break;
+    case NORTH_WEST:
+      bullets[i].position.x -= bullets[i].speed;
+      bullets[i].position.y -= bullets[i].speed;
+      break;
+    case NORTH_EAST:
+      bullets[i].position.x += bullets[i].speed;
+      bullets[i].position.y -= bullets[i].speed;
+      break;
+    case SOUTH:
+      bullets[i].position.y += bullets[i].speed;
+      break;
+    case SOUTH_WEST:
+      bullets[i].position.x -= bullets[i].speed;
+      bullets[i].position.y += bullets[i].speed;
+      break;
+    case SOUTH_EAST:
+      bullets[i].position.x += bullets[i].speed;
+      bullets[i].position.y += bullets[i].speed;
+      break;
+    case WEST:
+      bullets[i].position.x -= bullets[i].speed;
+      break;
+    case EAST:
+      bullets[i].position.x += bullets[i].speed;
+      break;
+    }
+  }
+
+  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
+    if (bullets[i].position.x < 0 || bullets[i].position.x > world->width ||
+        bullets[i].position.y < 0 || bullets[i].position.y > world->height) {
+      bullets[i].onScreen = false;
+    }
+  }
+}
+
+void DrawBullets(Bullet bullets[], World *world) {
+  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
+    if (bullets[i].onScreen) {
+      DrawCircleV(bullets[i].position, 2, RED);
+    }
+  }
+}
+
+void UpdatePlayer(Actor *player, Bullet bullets[], World *world) {
+  // MOVING
+  player->moving = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_LEFT) ||
+                   IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN);
+  // SPEED
+  if (player->moving && player->speed < player->maxSpeed) {
+    player->speed = player->speed < player->maxSpeed / 2
+                        ? player->speed + 0.2f
+                        : player->speed + 0.05f;
+  }
+
+  if (!player->moving && player->speed > 0) {
+    player->speed = player->speed > 0.0f ? player->speed - 0.3f : 0.0f;
+  }
+  // DIRECTION
+  if (!player->falling) {
+    if (IsKeyDown(KEY_RIGHT))
+      player->direction = EAST;
+    if (IsKeyDown(KEY_LEFT))
+      player->direction = WEST;
+    if (IsKeyDown(KEY_UP))
+      player->direction = NORTH;
+    if (IsKeyDown(KEY_DOWN))
+      player->direction = SOUTH;
+    if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_LEFT))
+      player->direction = NORTH_WEST;
+    if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_RIGHT))
+      player->direction = NORTH_EAST;
+    if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_LEFT))
+      player->direction = SOUTH_WEST;
+    if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_RIGHT))
+      player->direction = SOUTH_EAST;
+  }
+
+  // PLAYER POSITION
+  if (player->speed > 0) {
+    switch (player->direction) {
+    case NORTH:
+      player->position.y -= player->speed;
+      break;
+    case NORTH_WEST:
+      player->position.x -= player->speed;
+      player->position.y -= player->speed;
+      break;
+    case NORTH_EAST:
+      player->position.x += player->speed;
+      player->position.y -= player->speed;
+      break;
+    case SOUTH:
+      player->position.y += player->speed;
+      break;
+    case SOUTH_WEST:
+      player->position.x -= player->speed;
+      player->position.y += player->speed;
+      break;
+    case SOUTH_EAST:
+      player->position.x += player->speed;
+      player->position.y += player->speed;
+      break;
+    case WEST:
+      player->position.x -= player->speed;
+      break;
+    case EAST:
+      player->position.x += player->speed;
+      break;
+    }
+  }
+
+  // JUMPING
+  if (!player->jumping && player->jumpHeight <= 0.0f && IsKeyDown(KEY_SPACE)) {
+    player->jumping = true;
+  }
+  if (player->jumping && (player->jumpHeight < player->maxJumpHeight)) {
+    player->jumpHeight += 3.0f;
+  }
+  if (player->jumpHeight >= player->maxJumpHeight) {
+    player->jumping = false;
+    player->falling = true;
+  }
+  if (!player->jumping && player->jumpHeight > 0.0f) {
+    player->jumpHeight -= 2.0f;
+  }
+  if (player->jumpHeight <= 0.0f) {
+    player->falling = false;
+  }
+
+  // WORLD BONDARIES
+  if (player->position.x > world->width) {
+    player->position.x = 0;
+  }
+  if (player->position.x < 0) {
+    player->position.x = world->width;
+  }
+  if (player->position.y > world->height) {
+    player->position.y = 0;
+  }
+  if (player->position.y < 0) {
+    player->position.y = world->height;
+  }
+
+  // SHOOTING
+  if (IsKeyPressed(KEY_S)) {
+    ShootBullet(bullets, player);
+  }
+}
+
+void DrawPlayer(Actor *player) {
+  DrawCircleV(player->position, 20 + player->jumpHeight / 2, BLACK);
+}
+
+void DrawBulletsOnScreenText(Bullet bullets[]) {
+  int bulletsOnScreenCount = 0;
+  char bulletsOnScreenText[100];
+  bulletsOnScreenCount = 0;
+  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
+    if (bullets[i].onScreen) {
+      bulletsOnScreenCount += 1;
+    }
+  }
+
+  sprintf(bulletsOnScreenText, "Bullets on screen: %d", bulletsOnScreenCount);
+  DrawText(bulletsOnScreenText, 10, 10, 20, BLACK);
 }
 
 int main(void) {
   const char *title = "Game";
 
-  Bullet *bullets[100] = {0};
+  Bullet bullets[BULLETS_MAX_COUNT] = {0};
 
   World world;
   world.width = 800;
@@ -70,164 +252,18 @@ int main(void) {
 
   SetTargetFPS(60);
 
-  // TODO: remove when bullets is dynamic array
-  int bulletsCount = 0;
-
   while (!WindowShouldClose()) {
-    player.moving = IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_LEFT) ||
-                    IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN);
 
-    // SPEED
-    if (player.moving && player.speed < player.maxSpeed) {
-      player.speed = player.speed < player.maxSpeed / 2 ? player.speed + 0.2f
-                                                        : player.speed + 0.05f;
-    }
+    // Update
+    UpdatePlayer(&player, bullets, &world);
+    UpdateBullets(bullets, &world);
 
-    if (!player.moving && player.speed > 0) {
-      player.speed = player.speed > 0.0f ? player.speed - 0.3f : 0.0f;
-    }
-
-    // DIRECTION
-    if (!player.falling) {
-      if (IsKeyDown(KEY_RIGHT))
-        player.direction = EAST;
-      if (IsKeyDown(KEY_LEFT))
-        player.direction = WEST;
-      if (IsKeyDown(KEY_UP))
-        player.direction = NORTH;
-      if (IsKeyDown(KEY_DOWN))
-        player.direction = SOUTH;
-      if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_LEFT))
-        player.direction = NORTH_WEST;
-      if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_RIGHT))
-        player.direction = NORTH_EAST;
-      if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_LEFT))
-        player.direction = SOUTH_WEST;
-      if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_RIGHT))
-        player.direction = SOUTH_EAST;
-    }
-
-    // PLAYER POSITION
-    if (player.speed > 0) {
-      switch (player.direction) {
-      case NORTH:
-        player.position.y -= player.speed;
-        break;
-      case NORTH_WEST:
-        player.position.x -= player.speed;
-        player.position.y -= player.speed;
-        break;
-      case NORTH_EAST:
-        player.position.x += player.speed;
-        player.position.y -= player.speed;
-        break;
-      case SOUTH:
-        player.position.y += player.speed;
-        break;
-      case SOUTH_WEST:
-        player.position.x -= player.speed;
-        player.position.y += player.speed;
-        break;
-      case SOUTH_EAST:
-        player.position.x += player.speed;
-        player.position.y += player.speed;
-        break;
-      case WEST:
-        player.position.x -= player.speed;
-        break;
-      case EAST:
-        player.position.x += player.speed;
-        break;
-      }
-    }
-
-    // JUMPING
-    if (!player.jumping && player.jumpHeight <= 0.0f && IsKeyDown(KEY_SPACE)) {
-      player.jumping = true;
-    }
-    if (player.jumping && (player.jumpHeight < player.maxJumpHeight)) {
-      player.jumpHeight += 3.0f;
-    }
-    if (player.jumpHeight >= player.maxJumpHeight) {
-      player.jumping = false;
-      player.falling = true;
-    }
-    if (!player.jumping && player.jumpHeight > 0.0f) {
-      player.jumpHeight -= 2.0f;
-    }
-    if (player.jumpHeight <= 0.0f) {
-      player.falling = false;
-    }
-
-    // WORLD BONDARIES
-    if (player.position.x > world.width) {
-      player.position.x = 0;
-    }
-    if (player.position.x < 0) {
-      player.position.x = world.width;
-    }
-    if (player.position.y > world.height) {
-      player.position.y = 0;
-    }
-    if (player.position.y < 0) {
-      player.position.y = world.height;
-    }
-
-    // BULLETS
-
-    for (int i = 0; i < 30; i++) {
-      if (bullets[i] != NULL) {
-        switch (bullets[i]->direction) {
-        case NORTH:
-          bullets[i]->position.y -= bullets[i]->speed;
-          break;
-        case NORTH_WEST:
-          bullets[i]->position.x -= bullets[i]->speed;
-          bullets[i]->position.y -= bullets[i]->speed;
-          break;
-        case NORTH_EAST:
-          bullets[i]->position.x += bullets[i]->speed;
-          bullets[i]->position.y -= bullets[i]->speed;
-          break;
-        case SOUTH:
-          bullets[i]->position.y += bullets[i]->speed;
-          break;
-        case SOUTH_WEST:
-          bullets[i]->position.x -= bullets[i]->speed;
-          bullets[i]->position.y += bullets[i]->speed;
-          break;
-        case SOUTH_EAST:
-          bullets[i]->position.x += bullets[i]->speed;
-          bullets[i]->position.y += bullets[i]->speed;
-          break;
-        case WEST:
-          bullets[i]->position.x -= bullets[i]->speed;
-          break;
-        case EAST:
-          bullets[i]->position.x += bullets[i]->speed;
-          break;
-        }
-      }
-    }
-
-    // SHOOTING
-    if (IsKeyPressed(KEY_S)) {
-      bullets[bulletsCount] = shootBullet(&player);
-      bulletsCount += 1;
-    }
-
+    //Draw
     BeginDrawing();
-
     ClearBackground(DARKGRAY);
-    DrawCircleV(player.position, 20 + player.jumpHeight / 2, BLACK);
-
-    // Draw remaining bullets
-    for (int i = 0; i < 30; i++) {
-      if (bullets[i]) {
-        DrawCircleV(bullets[i]->position, 2, BLACK);
-      }
-    }
-
+    DrawPlayer(&player);
+    DrawBullets(bullets, &world);
+    DrawBulletsOnScreenText(bullets);
     EndDrawing();
   }
 
