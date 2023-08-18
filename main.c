@@ -142,27 +142,36 @@ int main(void) {
     }
 
     // JUMPING
-    if (!player.jumping && player.jumpHeight <= 0.0f && IsKeyDown(KEY_SPACE))
+    if (!player.jumping && player.jumpHeight <= 0.0f && IsKeyDown(KEY_SPACE)) {
       player.jumping = true;
-    if (player.jumping && (player.jumpHeight < player.maxJumpHeight))
+    }
+    if (player.jumping && (player.jumpHeight < player.maxJumpHeight)) {
       player.jumpHeight += 3.0f;
-    if (player.jumpHeight >= player.maxJumpHeight)
+    }
+    if (player.jumpHeight >= player.maxJumpHeight) {
       player.jumping = false;
-    player.falling = true;
-    if (!player.jumping && player.jumpHeight > 0.0f)
+      player.falling = true;
+    }
+    if (!player.jumping && player.jumpHeight > 0.0f) {
       player.jumpHeight -= 2.0f;
-    if (player.jumpHeight <= 0.0f)
+    }
+    if (player.jumpHeight <= 0.0f) {
       player.falling = false;
+    }
 
     // WORLD BONDARIES
-    if (player.position.x > world.width)
+    if (player.position.x > world.width) {
       player.position.x = 0;
-    if (player.position.x < 0)
+    }
+    if (player.position.x < 0) {
       player.position.x = world.width;
-    if (player.position.y > world.height)
+    }
+    if (player.position.y > world.height) {
       player.position.y = 0;
-    if (player.position.y < 0)
+    }
+    if (player.position.y < 0) {
       player.position.y = world.height;
+    }
 
     // BULLETS
 
