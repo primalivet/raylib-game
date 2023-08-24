@@ -1,537 +1,232 @@
-#include <math.h>
-#include <raylib.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+#include <raylib.h>
+#include <string.h>
 
-/**
- * Game
- * TODO: go over the other "steering behaviors", which was popularized by Craig
- * Reynolds.
- * colliding
- * TODO: bullets should decrease enemy health
- * TODO: enemy "touches" should decrease player health
- * TODO: player increasing speed as long as no collision or no 180 deg change in
- * direction
- * TODO: player "drag", basically when at high speed and changing direction the
- * change should be slower
- */
-
-/**
- * GLOBALS
- */
+//----------------------------------------------------------------------------- 
+// DEFINES
+//----------------------------------------------------------------------------- 
 
 #define TITLE "Game"
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 800
-#define BULLETS_MAX_COUNT 100
-#define BULLET_SPEED 10.0f
-#define PLAYER_VELOCITY_MAX 6.0f
+#define SCREEN_WIDTH 320
+#define SCREEN_HEIGHT 240
 
-#define ENEMY_MAX_COUNT 10
-#define ENEMY_AVOIDANCE_RADIUS 10.0f
-#define ENEMY_SEEK_WEIGHT 1.0f
-#define ENEMY_SEPERATION_WEIGHT 1.0f
-#define ENEMY_AVOIDANCE_WEIGHT 0.5f
+#define TILE_SIZE 16
+#define TILES_PER_ROW 20
+#define TARGET_FPS 60
+#define BACKGROUND      CLITERAL(Color){ 29, 42, 47, 255 }         
 
-#define COLLISION_ACCELERATION 20.0f
-
-/**
- * TYPEDEFS
- */
-
-typedef enum {
-  NORTH,
-  NORTH_EAST,
-  NORTH_WEST,
-  WEST,
-  EAST,
-  SOUTH,
-  SOUTH_EAST,
-  SOUTH_WEST,
-  UNDEFINED
-} Direction;
+//----------------------------------------------------------------------------- 
+// TYPEDEFS
+//----------------------------------------------------------------------------- 
 
 typedef struct {
-  Vector2 position;
-  Vector2 velocity;
-  Direction direction;
-  float radius;
-  Color color;
-  float jumpHeight;
-  float maxJumpHeight;
-  bool jumping;
-  bool falling;
-  bool alive;
-} Actor;
-
-typedef struct {
-  Vector2 position;
-  Direction direction;
-  float speed;
-  bool onScreen;
-} Bullet;
+  int index;
+  bool isWalkable;
+} TileDef;
 
 typedef struct {
   int width;
   int height;
-} World;
+  int tileSize;
+  int tilesCount;
+  Texture tileSet;
+  int **tileMap;
+  TileDef *tileDefs;
+} Level;
 
-/**
- * BULLET FUNCTIONS
- */
-
-void ShootBullet(Bullet bullets[], Actor *shooter) {
-  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
-    if (!bullets[i].onScreen) {
-      bullets[i].onScreen = true;
-      bullets[i].direction = shooter->direction;
-      bullets[i].position = shooter->position;
-      bullets[i].speed = BULLET_SPEED;
-      break;
-    }
-  }
-}
-
-void UpdateBullets(Bullet bullets[], World *world) {
-  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
-    switch (bullets[i].direction) {
-    case NORTH:
-      bullets[i].position.y -= bullets[i].speed;
-      break;
-    case NORTH_WEST:
-      bullets[i].position.x -= bullets[i].speed;
-      bullets[i].position.y -= bullets[i].speed;
-      break;
-    case NORTH_EAST:
-      bullets[i].position.x += bullets[i].speed;
-      bullets[i].position.y -= bullets[i].speed;
-      break;
-    case SOUTH:
-      bullets[i].position.y += bullets[i].speed;
-      break;
-    case SOUTH_WEST:
-      bullets[i].position.x -= bullets[i].speed;
-      bullets[i].position.y += bullets[i].speed;
-      break;
-    case SOUTH_EAST:
-      bullets[i].position.x += bullets[i].speed;
-      bullets[i].position.y += bullets[i].speed;
-      break;
-    case WEST:
-      bullets[i].position.x -= bullets[i].speed;
-      break;
-    case EAST:
-      bullets[i].position.x += bullets[i].speed;
-      break;
-    case UNDEFINED:
-      break;
-    }
-  }
-
-  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
-    if (bullets[i].position.x < 0 || bullets[i].position.x > world->width ||
-        bullets[i].position.y < 0 || bullets[i].position.y > world->height) {
-      bullets[i].onScreen = false;
-    }
-  }
-}
-
-void DrawBullets(Bullet bullets[], World *world) {
-  for (int i = 0; i < BULLETS_MAX_COUNT; i++) {
-    if (bullets[i].onScreen) {
-      DrawCircleV(bullets[i].position, 2, RED);
-    }
-  }
-}
-
-/**
- * VECTOR2 FUNCTIONS
- */
-
-/**
- * Normalize a Vector2
- */
-Vector2 NormalizeVector2(Vector2 v) {
-  float length = sqrt(v.x * v.x + v.y * v.y);
-  if (length == 0) {
-    return v; // prevent div by zero
-  }
-  Vector2 normalized = {v.x / length, v.y / length};
-  return normalized;
-}
-
-/**
- * GetDistance
- */
-float GetDistance(Vector2 v1, Vector2 v2) {
-  float distance = sqrt(pow(v1.x - v2.x, 2) + pow(v1.y - v2.y, 2));
-  return distance;
-}
-
-/**
- * Get a vector pointing from "origin" towards "target"
- */
-Vector2 GetSeekVector2(Vector2 origin, Vector2 target) {
-  Vector2 seek = {target.x - origin.x, target.y - origin.y};
-  return NormalizeVector2(seek);
-}
-
-/**
- * Get a vector in a direction to avoid collision
- */
-Vector2 GetSeperationVector2(Actor *actor, Actor *actors) {
-  Vector2 seperation = {0, 0};
-  int count = 0;
-
-  for (int i = 0; i < ENEMY_MAX_COUNT; i++) {
-    if (actor != &actors[i]) {
-      float distance = GetDistance(actors[i].position, actor->position);
-      if (distance > 0 && distance < ENEMY_AVOIDANCE_RADIUS) {
-        // enemy is to close to other enemies
-        Vector2 away = {actor->position.x - actors[i].position.x,
-                        actor->position.y - actors[i].position.y};
-
-        seperation.x += away.x;
-        seperation.y += away.y;
-        count++;
-      }
-    }
-
-    if (count > 0) {
-      seperation.x /= count;
-      seperation.y /= count;
-      // Might need to scale here
-      seperation = NormalizeVector2(seperation);
-    }
-  }
-  return seperation;
-}
-
-Vector2 GetCohesionAvoidanceVector2(Actor *actor, Actor *actors) {
-  Vector2 avaragePosition = {0, 0};
-  int count = 0;
-  for (int i = 0; i < ENEMY_MAX_COUNT; i++) {
-    if (actor != &actors[i]) {
-      avaragePosition.x += actors[i].position.x;
-      avaragePosition.y += actors[i].position.y;
-      count++;
-    }
-  }
-
-  if (count > 0) {
-    avaragePosition.x /= count;
-    avaragePosition.y /= count;
-    Vector2 awayFromAvaragePosition = {actor->position.x - avaragePosition.x,
-                                       actor->position.y - avaragePosition.y};
-    return NormalizeVector2(awayFromAvaragePosition);
-  }
-
-  return (Vector2){0, 0};
-}
-
-Vector2 GetRandomEdgeSpawnPosition(World *world) {
-  int randomEdge = GetRandomValue(1, 4);
-  int randomPlace = GetRandomValue(10, fmin(world->width, world->height) - 10);
+typedef struct {
   Vector2 position;
+  Vector2 velocity;
+  int size;
+} Player;
 
-  switch (randomEdge) {
-  case 1: // Top
-    position.x = randomPlace;
-    position.y = 20;
-    break;
-  case 2: // Left
-    position.x = 20;
-    position.y = randomPlace;
-    break;
-  case 3: // Right
-    position.x = world->width - 20;
-    position.y = randomPlace;
-    break;
-  case 4: // Bottom
-    position.x = randomPlace;
-    position.y = world->height - 20;
-    break;
+//----------------------------------------------------------------------------- 
+// LEVEL FNS
+//----------------------------------------------------------------------------- 
+
+Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsFilePath, const char *tilesetFilePath) {
+  Texture2D tileSet = LoadTexture(tilesetFilePath); 
+
+  FILE *tilemap_data_file = fopen(tilemapFilePath, "r");
+  if (tilemap_data_file == NULL) {
+    printf("Error loading level file!");
+    exit(1);
   }
 
-  return position;
-}
+  int width, height;
 
-/**
- * ACTOR FUNCTIONS
- */
-
-/**
- * CheckCollisionActors
- */
-bool CheckCollisionActors(Actor *a, Actor *b) {
-  float distance = GetDistance(a->position, b->position);
-  if ((a->jumping && !b->jumping) || (!a->jumping && b->jumping)) {
-    return false;
+  if (fscanf(tilemap_data_file, "%d %d\n", &width, &height) != 2) {
+    printf("Error reading tilemap width and height\n");
+    fclose(tilemap_data_file);
+    exit(1);
   }
-  if ((a->falling && !b->falling) || (!a->falling && b->falling)) {
-    return false;
+
+  int tilesCount = (tileSet.width /tileSize) * (tileSet.height /tileSize);
+    
+  int **tileMap = (int **)malloc(height * sizeof(int*));
+  for (int i = 0; i < height; i++) {
+    tileMap[i] = (int *)malloc(width * sizeof(int));
   }
-  return distance < (a->radius + b->radius);
+  char tilemap_line_buffer[1000]; // Buffer line cannot exeed
+
+  int y = 0;
+  while(fgets(tilemap_line_buffer, sizeof(tilemap_line_buffer), tilemap_data_file)) {
+    // Replace unix and windows line ending with null terminator
+    char *newline = strchr(tilemap_line_buffer, '\n'); 
+    if (newline) *newline = '\0';
+    char *carriageReturn = strchr(tilemap_line_buffer, '\r');
+    if (carriageReturn) *newline = '\0';
+    char *token = strtok(tilemap_line_buffer, " \n"); 
+    int x = 0;
+    while (token) {
+      int tileIndex = atoi(token); 
+      tileMap[y][x] = tileIndex;
+      token = strtok(NULL, " "); 
+      x++;
+    }
+    y++;
+  }
+
+  fclose(tilemap_data_file);
+
+  FILE *tiledef_data_file = fopen(tiledefsFilePath, "r");
+  if (tiledef_data_file == NULL) {
+    printf("Error loading level tile definitions file!");
+  }
+
+  TileDef *tileDefs = (TileDef *)malloc(tilesCount * sizeof(TileDef));
+  char tiledef_buffer[1000]; // Buffer line cannot exeed
+
+  while(fgets(tiledef_buffer, sizeof(tiledef_buffer), tiledef_data_file)) {
+    // Replace unix and windows line ending with null terminator
+    char *newline = strchr(tiledef_buffer, '\n'); 
+    if (newline) *newline = '\0'; 
+    char *carriageReturn = strchr(tiledef_buffer, '\r');
+    if (carriageReturn) *newline = '\0'; 
+
+    char *token = strtok(tiledef_buffer, " \n");
+    int tileIndex = atoi(token);
+    token = strtok(NULL, " \n");
+    int isWalkable = atoi(token);
+    tileDefs[tileIndex] = (TileDef) { .index = tileIndex, .isWalkable = isWalkable };
+  }
+
+  Level level;
+  level.width = width;
+  level.height = height;
+  level.tileSize = tileSize;
+  level.tileSet = tileSet;
+  level.tilesCount = tilesCount;
+  level.tileMap = tileMap;
+  level.tileDefs = tileDefs;
+
+  return level;
 }
 
-void CollisionActors(Actor *a, Actor *b) {
-  // TODO: this seem to be not working at all. Velocity is basically as is.
-  Vector2 collision = {b->position.x - a->position.x,
-                       b->position.y - a->position.y};
-  Vector2 normalized = NormalizeVector2(collision);
-  a->velocity.x = normalized.x * COLLISION_ACCELERATION;
-  a->velocity.y = normalized.y * COLLISION_ACCELERATION;
-  b->velocity.x = -normalized.x * COLLISION_ACCELERATION;
-  b->velocity.y = -normalized.y * COLLISION_ACCELERATION;
+void UnloadLevel(Level *level) {
+  for (int y = 0; y < level->height; y++) {
+    free(level->tileMap[y]);
+  }
+  free(level->tileMap);
 }
 
-/**
- * PLAYER FUNCTIONS
- */
+void DrawLevel(Level *level) {
+  for (int y = 0; y < level->height; y++) {
+   for (int x = 0; x < level->width; x++) {
+      int index = level->tileMap[y][x];
+      TileDef tileDef = level->tileDefs[index];
+      int sourceX = (index % TILES_PER_ROW) * TILE_SIZE;
+      int sourceY = (index) / TILES_PER_ROW * TILE_SIZE;
+      int sourceW = TILE_SIZE;
+      int sourceH = TILE_SIZE;
+      Rectangle source = { sourceX, sourceY, sourceW, sourceH };
+      Rectangle dest = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE }; 
 
-Actor CreatePlayer(float positionX, float positionY, Direction direction) {
-  Actor player;
-  player.position.x = positionX;
-  player.position.y = positionY;
-  player.velocity.x = 0.0f;
-  player.velocity.y = 0.0f;
-  player.direction = NORTH;
-  player.radius = 20.0f;
-  player.color = BLACK;
-  player.jumpHeight = 0.0f;
-  player.maxJumpHeight = 30.0f;
-  player.jumping = false;
-  player.falling = false;
-  player.alive = true;
+      DrawTexturePro(level->tileSet, source, dest, (Vector2){0,0}, 0.0f, WHITE);
+   } 
+  }
+}
+
+//----------------------------------------------------------------------------- 
+// CAMERA FNS
+//----------------------------------------------------------------------------- 
+
+Camera2D InitCam(Vector2 target, Vector2 offset) {
+  Camera2D camera = {0};
+  camera.target = target;
+  camera.offset = offset;
+  camera.rotation = 0;
+  camera.zoom = 1.0f;
+
+  return camera;
+}
+
+void UpdateCam(Camera2D *camera, Vector2 target) {
+    camera->target = target;
+}
+
+//----------------------------------------------------------------------------- 
+// PLAYER FNS
+//----------------------------------------------------------------------------- 
+
+Player InitPlayer(int size, Vector2 position, Vector2 velocity) {
+  Player player;
+  player.size = size;
+  player.position = position;
+  player.velocity = velocity;
+
   return player;
 }
 
-Vector2 GetVelocityFromDirection(Direction dir, float speed) {
-  Vector2 velocity = {0, 0};
-  switch (dir) {
-  case NORTH:
-    velocity.x = 0;
-    velocity.y = -speed;
-    break;
-  case SOUTH:
-    velocity.x = 0;
-    velocity.y = speed;
-    break;
-  case WEST:
-    velocity.x = -speed;
-    velocity.y = 0;
-    break;
-  case EAST:
-    velocity.x = speed;
-    velocity.y = 0;
-    break;
-  case NORTH_WEST:
-    velocity.x = -speed;
-    velocity.y = -speed;
-    break;
-  case NORTH_EAST:
-    velocity.x = speed;
-    velocity.y = -speed;
-    break;
-  case SOUTH_WEST:
-    velocity.x = -speed;
-    velocity.y = speed;
-    break;
-  case SOUTH_EAST:
-    velocity.x = speed;
-    velocity.y = speed;
-    break;
-  case UNDEFINED:
-    velocity.x = 0;
-    velocity.y = 0;
-    break;
-  }
+void UpdatePlayer(Player *player) {
+  player->velocity = (Vector2){0.0f, 0.0f};
+  if (IsKeyDown(KEY_UP)) player->velocity.y = -2.0f;
+  if (IsKeyDown(KEY_DOWN)) player->velocity.y = 2.0f;
+  if (IsKeyDown(KEY_LEFT)) player->velocity.x = -2.0f;
+  if (IsKeyDown(KEY_RIGHT)) player->velocity.x = 2.0f;
 
-  return velocity;
+  player->position.x += player->velocity.x;
+  player->position.y += player->velocity.y;
 }
 
-void SetPlayerVelocity(Actor *player, Direction direction, bool moving) {
-  Vector2 velocity =
-      GetVelocityFromDirection(player->direction, PLAYER_VELOCITY_MAX);
-
-  player->velocity = velocity;
-
-  if (moving) {
-    player->position.x += player->velocity.x;
-    player->position.y += player->velocity.y;
-  } else {
-    player->position.x -= 0;
-    player->position.y -= 0;
-  }
+void DrawPlayer(Player *player) {
+  DrawRectangle(player->position.x, player->position.y, player->size, player->size, RED);
 }
 
-void SetPlayerDirection(Actor *player) {
-  if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_LEFT)) {
-    player->direction = NORTH_WEST;
-  } else if (IsKeyDown(KEY_UP) && IsKeyDown(KEY_RIGHT)) {
-    player->direction = NORTH_EAST;
-  } else if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_LEFT)) {
-    player->direction = SOUTH_WEST;
-  } else if (IsKeyDown(KEY_DOWN) && IsKeyDown(KEY_RIGHT)) {
-    player->direction = SOUTH_EAST;
-  } else if (IsKeyDown(KEY_RIGHT)) {
-    player->direction = EAST;
-  } else if (IsKeyDown(KEY_LEFT)) {
-    player->direction = WEST;
-  } else if (IsKeyDown(KEY_UP)) {
-    player->direction = NORTH;
-  } else if (IsKeyDown(KEY_DOWN)) {
-    player->direction = SOUTH;
-  }
-}
-
-void UpdatePlayer(Actor *player, Bullet bullets[], World *world) {
-  bool moving = IsKeyDown(KEY_UP) || IsKeyDown(KEY_DOWN) ||
-                IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_RIGHT);
-
-  SetPlayerDirection(player);
-  SetPlayerVelocity(player, player->direction, moving);
-
-  // JUMPING
-  if (!player->jumping && player->jumpHeight <= 0.0f && IsKeyDown(KEY_SPACE)) {
-    player->jumping = true;
-  }
-  if (player->jumping && (player->jumpHeight < player->maxJumpHeight)) {
-    player->jumpHeight += 3.0f;
-  }
-  if (player->jumpHeight >= player->maxJumpHeight) {
-    player->jumping = false;
-    player->falling = true;
-  }
-  if (!player->jumping && player->jumpHeight > 0.0f) {
-    player->jumpHeight -= 2.0f;
-  }
-  if (player->jumpHeight <= 0.0f) {
-    player->falling = false;
-  }
-
-  // WORLD BONDARIES
-  if (player->position.x > world->width) {
-    player->position.x = 0;
-  }
-  if (player->position.x < 0) {
-    player->position.x = world->width;
-  }
-  if (player->position.y > world->height) {
-    player->position.y = 0;
-  }
-  if (player->position.y < 0) {
-    player->position.y = world->height;
-  }
-
-  // SHOOTING
-  if (IsKeyPressed(KEY_S)) {
-    ShootBullet(bullets, player);
-  }
-}
-
-void DrawPlayer(Actor *player) {
-  DrawCircleV(player->position, player->radius + player->jumpHeight / 2,
-              player->color);
-}
-
-/**
- * WORLD FUNCTIONS
- */
-
-World CreateWorld(int width, int height) {
-  World world;
-  world.width = width;
-  world.height = height;
-  return world;
-}
-
-/**
- * ENEMY FUNCTIONS
- */
-
-Actor CreateEnemy(World *world, Actor *player) {
-  Actor enemy;
-  Vector2 position = GetRandomEdgeSpawnPosition(world);
-  Direction direction = NORTH;
-  enemy.velocity.x = 0;
-  enemy.velocity.y = 0;
-  enemy.position = position;
-  enemy.direction = direction;
-  enemy.radius = 10.0f;
-  enemy.color = RED;
-  enemy.jumpHeight = 0.0f;
-  enemy.maxJumpHeight = 0.0f;
-  enemy.jumping = false;
-  enemy.falling = false;
-  enemy.alive = true;
-  return enemy;
-}
-
-void UpdateEnemies(Actor enemies[], World *world, Actor *player) {
-  for (int i = 0; i < ENEMY_MAX_COUNT; i++) {
-    if (!enemies[i].alive) {
-      enemies[i] = CreateEnemy(world, player);
-    } else {
-      Vector2 seek = GetSeekVector2(enemies[i].position, player->position);
-      Vector2 seperation = GetSeperationVector2(&enemies[i], enemies);
-      Vector2 avoidance = GetCohesionAvoidanceVector2(&enemies[i], enemies);
-
-      enemies[i].velocity.x = (seek.x * ENEMY_SEEK_WEIGHT) +
-                              (seperation.x * ENEMY_SEPERATION_WEIGHT) +
-                              (avoidance.x * ENEMY_AVOIDANCE_WEIGHT);
-      enemies[i].velocity.y = (seek.y * ENEMY_SEEK_WEIGHT) +
-                              (seperation.y * ENEMY_SEPERATION_WEIGHT) +
-                              (avoidance.y * ENEMY_AVOIDANCE_WEIGHT);
-      enemies[i].position.x += enemies[i].velocity.x;
-      enemies[i].position.y += enemies[i].velocity.y;
-    }
-  }
-}
-
-void DrawEnemies(Actor enemies[]) {
-  for (int i = 0; i < ENEMY_MAX_COUNT; i++) {
-    if (enemies[i].alive) {
-      DrawCircleV(enemies[i].position, enemies[i].radius, enemies[i].color);
-    }
-  }
-}
+//----------------------------------------------------------------------------- 
+// MAIN
+//----------------------------------------------------------------------------- 
 
 int main(void) {
-  const char *title = TITLE;
+  InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE);
 
-  Bullet bullets[BULLETS_MAX_COUNT] = {0};
-  World world = CreateWorld(SCREEN_WIDTH, SCREEN_HEIGHT);
-  Actor enemies[ENEMY_MAX_COUNT] = {0};
-  Actor player =
-      CreatePlayer((float)world.width / 2, (float)world.height / 2, NORTH);
+  Level level = LoadLevel( TILE_SIZE, "level_1_tilemap.txt", "level_1_tiledef.txt", "tiles-16.png");
+  Player player = InitPlayer(TILE_SIZE, (Vector2){2.0f * TILE_SIZE, 2.0f * TILE_SIZE}, (Vector2){0.0f, 0.0f});
+  Camera2D camera = InitCam(player.position, (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f });
 
-  InitWindow(world.width, world.height, title);
-  SetTargetFPS(60);
+  SetTargetFPS(TARGET_FPS);
 
-  while (!WindowShouldClose()) {
+  while(!WindowShouldClose()) {
+    UpdatePlayer(&player);
 
-    // Update
-    UpdatePlayer(&player, bullets, &world);
-    UpdateBullets(bullets, &world);
-    UpdateEnemies(enemies, &world, &player);
+    UpdateCam(&camera, player.position); 
 
-    // Draw
     BeginDrawing();
-    ClearBackground(DARKGRAY);
-    DrawBullets(bullets, &world);
-    for (int i = 0; i < ENEMY_MAX_COUNT; i++) {
-      if (CheckCollisionActors(&player, &enemies[i])) {
-        enemies[i].color = BLUE;
-        CollisionActors(&player, &enemies[i]);
-      }
-    }
-    DrawEnemies(enemies);
+    BeginMode2D(camera);
+
+    ClearBackground(BACKGROUND);
+    DrawLevel(&level);
     DrawPlayer(&player);
+
+    EndMode2D();
     EndDrawing();
   }
 
   CloseWindow();
+
+  UnloadLevel(&level);
 
   return 0;
 }
