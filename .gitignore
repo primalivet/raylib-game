@@ -1,3 +1,4 @@
 .cache
 game
 *.o
+compile_commands.json
