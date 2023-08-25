@@ -1,0 +1,19 @@
+Raylib Game
+
+---
+
+COMPILING
+
+Currently using a Makefile to build the project isn't the best way, but favouring it for now as it's simple while flexible. The main drawback is that C libs installed with Homebrew aren't found because Homebrew has a bit arcane directory structure.
+
+So this brings problems when trying to compile cross-platform and most probably issues with intel macs.
+
+Anyway
+
+The following command should print the CFLAGS and LDFLAGS for raylib and this is the only library used in this project.
+
+echo $(pkg-config --libs --cflags raylib)
+
+LSP
+
+I'm using clangd language server, it has to know the compile command to work. This command has to be specified in a file call compile_commands.json. To generate it make sure you have the program "bear" installed ("brew install bear" on mac) and then run it over the Makefile with "bear -- make" to generate a "compile_commands.json".

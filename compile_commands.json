@@ -1,0 +1,19 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-I/opt/homebrew/Cellar/raylib/4.5.0/include",
+      "-I/opt/homebrew/Cellar/raylib/4.5.0/lib",
+      "-c",
+      "-o",
+      "main.o",
+      "main.c"
+    ],
+    "directory": "/Users/gustaf/Code/OSS/learn-c/raylib-game",
+    "file": "/Users/gustaf/Code/OSS/learn-c/raylib-game/main.c",
+    "output": "/Users/gustaf/Code/OSS/learn-c/raylib-game/main.o"
+  }
+]
