@@ -14,7 +14,10 @@ LDFLAGS = \
 TARGET = game
 
 # Source files
-SRCS = main.c
+SRCS = level.c \
+       player.c \
+       camera.c \
+       main.c 
 
 # Derive object files from source files
 OBJS = $(SRCS:.c=.o)
