@@ -4,35 +4,32 @@ CFLAGS = \
 	 -Wall \
 	 -Wextra \
 	 -Werror \
-	 -I/opt/homebrew/Cellar/raylib/4.5.0/include \
-	 -I/opt/homebrew/Cellar/raylib/4.5.0/lib 
+	 -I./include \
+	 -I/opt/homebrew/Cellar/raylib/4.5.0/include 
+
 LDFLAGS = \
 	 -L/opt/homebrew/Cellar/raylib/4.5.0/lib \
 	 -lraylib 
 
-# Name of executable
-TARGET = game
-
-# Source files
-SRCS = level.c \
+# Source files and derive object files from source files
+SRC_FILES = level.c \
        player.c \
        camera.c \
        main.c 
 
-# Derive object files from source files
-OBJS = $(SRCS:.c=.o)
+OBJ_FILES = $(SRC_FILES:.c=.o)
 
-# Default target
+TARGET = ./bin/game
+
 all: $(TARGET)
 
 # Link target executable
-$(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
+$(TARGET): $(OBJ_FILES)
+	$(CC) $(OBJ_FILES) -o $(TARGET) $(LDFLAGS)
 
 # Pattern rule to compile source files into object files
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean object files and executable
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJ_FILES) $(TARGET)

@@ -1,4 +1,4 @@
 .cache
-game
+bin/*
 *.o
 compile_commands.json
