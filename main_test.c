@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "_assertion.h"
+#include "assertion.h"
 
 int test_count = 0;
 

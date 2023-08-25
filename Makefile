@@ -4,7 +4,6 @@ CFLAGS = \
 	 -Wall \
 	 -Wextra \
 	 -Werror \
-	 -I./include \
 	 -I/opt/homebrew/Cellar/raylib/4.5.0/include 
 
 LDFLAGS = \
@@ -22,11 +21,11 @@ OBJ_FILES = $(SRC_FILES:.c=.o)
 TARGET = ./bin/game
 
 # Test source files and derive object files from source files
-TEST_SRC_FILES = tests/main.c
+TEST_SRC_FILES = main_test.c
 
 TEST_OBJ_FILES = $(TEST_SRC_FILES:.c=.o)
 
-TEST_TARGET = ./bin/tests
+TEST_TARGET = ./bin/test
 
 all: $(TARGET)
 
