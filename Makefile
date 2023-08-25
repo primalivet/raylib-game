@@ -33,9 +33,11 @@ all: $(TARGET)
 $(TARGET): $(OBJ_FILES)
 	$(CC) $(OBJ_FILES) -o $(TARGET) $(LDFLAGS)
 
+# Run test executable
 test: $(TEST_TARGET)
 	./$(TEST_TARGET)
-
+	
+# Link test executable
 $(TEST_TARGET): $(filter-out main.o, $(OBJ_FILES)) $(TEST_OBJ_FILES)
 	$(CC) $(filter-out main.o, $(OBJ_FILES)) $(TEST_OBJ_FILES) -o $(TEST_TARGET) $(LDFLAGS)
 
@@ -43,5 +45,6 @@ $(TEST_TARGET): $(filter-out main.o, $(OBJ_FILES)) $(TEST_OBJ_FILES)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Remove target executables and object files
 clean:
 	rm -f $(OBJ_FILES) $(TARGET) $(TEST_OBJ_FILES) $(TEST_TARGET)
