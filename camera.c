@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include "camera.h"
 
 Camera2D InitCam(Vector2 target, Vector2 offset) 
 {
