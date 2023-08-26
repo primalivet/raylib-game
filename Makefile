@@ -11,7 +11,8 @@ LDFLAGS = \
 	 -lraylib 
 
 # Source files and derive object files from source files
-SRC_FILES = level.c \
+SRC_FILES = vector2.c \
+	    level.c \
 	    player.c \
 	    camera.c \
 	    main.c 

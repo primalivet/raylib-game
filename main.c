@@ -25,6 +25,7 @@
 #include "level.h"
 #include "camera.h"
 
+
 //----------------------------------------------------------------------------- 
 // MAIN
 //----------------------------------------------------------------------------- 
@@ -37,12 +38,11 @@ int main(void)
   Texture tileset = LoadTexture("resources/tiles-16.png");
   Level level     = LoadLevel( TILE_SIZE, "resources/level1.map", "resources/level1.def", &tileset);
   Player player   = InitPlayer(TILE_SIZE, (Vector2){2.0f * TILE_SIZE, 2.0f * TILE_SIZE}, (Vector2){0.0f, 0.0f});
-  Camera2D camera = InitCam(player.position, (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f });
+  Camera2D camera = InitCam(player.position, (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f }, 2.0f);
 
   while(!WindowShouldClose()) 
   {
-    UpdatePlayer(&player);
-
+    UpdatePlayer(&player, &level);
     UpdateCam(&camera, player.position); 
 
     BeginDrawing();

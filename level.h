@@ -2,6 +2,7 @@
 #include <raylib.h>
 
 #ifndef LEVEL_H
+#define LEVEL_H
 #ifndef TILE_SIZE
 #define TILE_SIZE 16
 #endif
@@ -10,7 +11,6 @@
 #define TILES_PER_ROW 20
 #endif
 
-#define LEVEL_H
 typedef struct 
 {
   int  index;
