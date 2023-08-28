@@ -11,10 +11,10 @@ typedef struct
   Vector2 velocity;
   int size;
   Color color;
-} Player;
+} player;
 
-Player InitPlayer(int size, Vector2 position, Vector2 velocity);
-void   UpdatePlayer(Player *player, Level *level);
-void   DrawPlayer(Player *player);
+player init_player(int size, Vector2 position, Vector2 velocity);
+void   update_player(player *player, level *level);
+void   draw_player(player *player);
 
 #endif

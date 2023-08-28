@@ -36,21 +36,21 @@ int main(void)
   SetTargetFPS(TARGET_FPS);
 
   Texture tileset = LoadTexture("resources/tiles-16.png");
-  Level level     = LoadLevel( TILE_SIZE, "resources/level1.map", "resources/level1.def", &tileset);
-  Player player   = InitPlayer(TILE_SIZE, (Vector2){3.0f * TILE_SIZE, 3.0f * TILE_SIZE}, (Vector2){0.0f, 0.0f});
-  Camera2D camera = InitCam(player.position, (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f }, 2.0f);
+  level level     = load_level( TILE_SIZE, "resources/level1.map", "resources/level1.def", &tileset);
+  player player   = init_player(TILE_SIZE, (Vector2){3.0f * TILE_SIZE, 3.0f * TILE_SIZE}, (Vector2){0.0f, 0.0f});
+  Camera2D camera = init_camera(player.position, (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f }, 2.0f);
 
   while(!WindowShouldClose()) 
   {
-    UpdatePlayer(&player, &level);
-    UpdateCam(&camera, player.position); 
+    update_player(&player, &level);
+    update_camera(&camera, player.position); 
 
     BeginDrawing();
     BeginMode2D(camera);
 
     ClearBackground(BACKGROUND);
-    DrawLevel(&level);
-    DrawPlayer(&player);
+    draw_level(&level);
+    draw_player(&player);
 
     EndMode2D();
     EndDrawing();
@@ -58,7 +58,7 @@ int main(void)
 
   CloseWindow();
 
-  UnloadLevel(&level);
+  unload_level(&level);
 
   return 0;
 }

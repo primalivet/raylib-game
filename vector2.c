@@ -1,6 +1,6 @@
 #include <raylib.h>
 
-Vector2 ClampVector2(Vector2 position, Rectangle boundary) 
+Vector2 clamp_vector2(Vector2 position, Rectangle boundary) 
 {
   Vector2 clamped = position;
   if (clamped.x < boundary.x) clamped.x = boundary.x;

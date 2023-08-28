@@ -3,9 +3,9 @@
 #include <string.h>
 #include "level.h"
 
-Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsFilePath, Texture2D *tileset) 
+level load_level(int tile_size, const char *tilemap_path, const char *tile_defs_path, Texture2D *tileset) 
 {
-  FILE *tilemap_data_file = fopen(tilemapFilePath, "r");
+  FILE *tilemap_data_file = fopen(tilemap_path, "r");
   if (tilemap_data_file == NULL) 
   {
     printf("Error loading level file!");
@@ -21,12 +21,12 @@ Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsF
     exit(1);
   }
 
-  int tilesCount = (tileset->width /tileSize) * (tileset->height /tileSize);
-  int **tileMap  = (int **)malloc(height * sizeof(int*));
+  int tiles_count = (tileset->width /tile_size) * (tileset->height /tile_size);
+  int **tilemap  = (int **)malloc(height * sizeof(int*));
 
   for (int i = 0; i < height; i++) 
   {
-    tileMap[i] = (int *)malloc(width * sizeof(int));
+    tilemap[i] = (int *)malloc(width * sizeof(int));
   }
 
   char tilemap_line_buffer[1000]; // Buffer line cannot exeed
@@ -37,14 +37,14 @@ Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsF
     // Replace unix and windows line ending with null terminator
     char *newline                = strchr(tilemap_line_buffer, '\n'); 
     if (newline) *newline        = '\0';
-    char *carriageReturn         = strchr(tilemap_line_buffer, '\r');
-    if (carriageReturn) *newline = '\0';
+    char *carriage_return         = strchr(tilemap_line_buffer, '\r');
+    if (carriage_return) *newline = '\0';
     char *token                  = strtok(tilemap_line_buffer, " \n"); 
     int x                        = 0;
     while (token) 
     {
-      int tileIndex = atoi(token); 
-      tileMap[y][x] = tileIndex;
+      int tilemap_index = atoi(token); 
+      tilemap[y][x] = tilemap_index;
       token         = strtok(NULL, " "); 
       x++;
     }
@@ -53,13 +53,13 @@ Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsF
 
   fclose(tilemap_data_file);
 
-  FILE *tiledef_data_file = fopen(tiledefsFilePath, "r");
+  FILE *tiledef_data_file = fopen(tile_defs_path, "r");
   if (tiledef_data_file == NULL) 
   {
     printf("Error loading level tile definitions file!");
   }
 
-  TileDef *tileDefs = (TileDef *)malloc(tilesCount * sizeof(TileDef));
+  tile_def *tile_defs = (tile_def *)malloc(tiles_count * sizeof(tile_def));
   char    tiledef_buffer[1000]; // Buffer line cannot exeed
 
   while(fgets(tiledef_buffer, sizeof(tiledef_buffer), tiledef_data_file)) 
@@ -67,52 +67,52 @@ Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsF
     // Replace unix and windows line ending with null terminator
     char *newline                = strchr(tiledef_buffer, '\n'); 
     if (newline) *newline        = '\0'; 
-    char *carriageReturn         = strchr(tiledef_buffer, '\r');
-    if (carriageReturn) *newline = '\0'; 
+    char *carriage_return         = strchr(tiledef_buffer, '\r');
+    if (carriage_return) *newline = '\0'; 
 
     char *token                  = strtok(tiledef_buffer, " \n");
-    int tileIndex                = atoi(token);
+    int tilemap_index                = atoi(token);
     token                        = strtok(NULL, " \n");
-    int isWalkable               = atoi(token);
-    tileDefs[tileIndex]          = (TileDef) { .index = tileIndex, .isWalkable = isWalkable };
+    int is_walkable               = atoi(token);
+    tile_defs[tilemap_index]          = (tile_def) { .index = tilemap_index, .is_walkable = is_walkable };
   }
 
-  Level level;
+  level level;
   level.width      = width;
   level.height     = height;
-  level.tileSize   = tileSize;
-  level.tileSet    = tileset;
-  level.tilesCount = tilesCount;
-  level.tileMap    = tileMap;
-  level.tileDefs   = tileDefs;
+  level.tile_size   = tile_size;
+  level.tileset    = tileset;
+  level.tiles_count = tiles_count;
+  level.tilemap    = tilemap;
+  level.tile_defs   = tile_defs;
 
   return level;
 }
 
-void UnloadLevel(Level *level) 
+void unload_level(level *level) 
 {
   for (int y = 0; y < level->height; y++) 
   {
-    free(level->tileMap[y]);
+    free(level->tilemap[y]);
   }
-  free(level->tileMap);
+  free(level->tilemap);
 }
 
-void DrawLevel(Level *level) 
+void draw_level(level *level) 
 {
   for (int y = 0; y < level->height; y++) 
   {
    for (int x = 0; x < level->width; x++) 
     {
-      int index        = level->tileMap[y][x];
-      int sourceX      = (index % TILES_PER_ROW) * TILE_SIZE;
-      int sourceY      = (index) / TILES_PER_ROW * TILE_SIZE;
-      int sourceW      = TILE_SIZE;
-      int sourceH      = TILE_SIZE;
-      Rectangle source = { sourceX      , sourceY      , sourceW  , sourceH };
+      int index        = level->tilemap[y][x];
+      int source_x      = (index % TILES_PER_ROW) * TILE_SIZE;
+      int source_y      = (index) / TILES_PER_ROW * TILE_SIZE;
+      int source_w      = TILE_SIZE;
+      int source_h      = TILE_SIZE;
+      Rectangle source = { source_x      , source_y      , source_w  , source_h };
       Rectangle dest   = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE }; 
 
-      DrawTexturePro(*level->tileSet, source, dest, (Vector2){0,0}, 0.0f, WHITE);
-   } 
+      DrawTexturePro(*level->tileset, source, dest, (Vector2){0,0}, 0.0f, WHITE);
+   }
   }
 }

@@ -14,22 +14,22 @@
 typedef struct 
 {
   int  index;
-  bool isWalkable;
-} TileDef;
+  bool is_walkable;
+} tile_def;
 
 typedef struct 
 {
   int     width;
   int     height;
-  int     tileSize;
-  int     tilesCount;
-  Texture *tileSet;
-  int     **tileMap;
-  TileDef *tileDefs;
-} Level;
+  int     tile_size;
+  int     tiles_count;
+  Texture *tileset;
+  int     **tilemap;
+  tile_def *tile_defs;
+} level;
 
-Level LoadLevel(int tileSize, const char *tilemapFilePath, const char *tiledefsFilePath, Texture2D *tileSet);
-void  UnloadLevel(Level *level);
-void  DrawLevel(Level *level);
+level load_level(int tile_size, const char *tilemap_path, const char *tile_defs_path, Texture2D *tileset);
+void  unload_level(level *level);
+void  draw_level(level *level);
 
 #endif
