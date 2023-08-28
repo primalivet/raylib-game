@@ -113,14 +113,6 @@ void DrawLevel(Level *level)
       Rectangle dest   = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE }; 
 
       DrawTexturePro(*level->tileSet, source, dest, (Vector2){0,0}, 0.0f, WHITE);
-
-      TileDef tileDef = level->tileDefs[index];
-      if (tileDef.isWalkable) 
-      {
-        dest = (Rectangle){ x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE }; 
-        Font font = GetFontDefault();
-        DrawTextEx(font, "W", (Vector2){x * TILE_SIZE, y * TILE_SIZE}, 5.0f, 0.0f, RED);
-      }
    } 
   }
 }
