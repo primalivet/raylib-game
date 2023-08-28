@@ -3,7 +3,6 @@
 
 #ifndef PLAYER_H
 #define PLAYER_H
-#define HITBOX_TOLERANCE 2;
 
 typedef struct 
 {
