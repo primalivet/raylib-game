@@ -26,7 +26,7 @@ bool check_tilemap_collision(Rectangle *object, level *level)
       tile_def tile_def = level->tile_defs[tilemap_index];
 
       if (!tile_def.is_walkable ) {
-        Rectangle tile_rect = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+        Rectangle tile_rect = { x * level->tile_size, y * level->tile_size, level->tile_size, level->tile_size };
         if ((object->x < (tile_rect.x + tile_rect.width) && (object->x + object->width) > tile_rect.x) &&
         (object->y < (tile_rect.y + tile_rect.height) && (object->y + object->height) > tile_rect.y))
         {
@@ -65,8 +65,8 @@ void update_player(player *player, level *level)
   Rectangle level_boundary = {
     0.0f, 
     0.0f, 
-    level->width * TILE_SIZE - player->size, 
-    level->height * TILE_SIZE - player->size 
+    level->width * level->tile_size - player->size, 
+    level->height * level->tile_size - player->size 
   };
 
   proposed_position = clamp_vector2(proposed_position, level_boundary);

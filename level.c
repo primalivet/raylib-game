@@ -3,7 +3,7 @@
 #include <string.h>
 #include "level.h"
 
-level load_level(int tile_size, const char *tilemap_path, const char *tile_defs_path, Texture2D *tileset) 
+level load_level(int tile_size, int tiles_per_row, const char *tilemap_path, const char *tile_defs_path, Texture2D *tileset) 
 {
   FILE *tilemap_data_file = fopen(tilemap_path, "r");
   if (tilemap_data_file == NULL) 
@@ -78,13 +78,14 @@ level load_level(int tile_size, const char *tilemap_path, const char *tile_defs_
   }
 
   level level;
-  level.width      = width;
-  level.height     = height;
-  level.tile_size   = tile_size;
-  level.tileset    = tileset;
-  level.tiles_count = tiles_count;
-  level.tilemap    = tilemap;
-  level.tile_defs   = tile_defs;
+  level.width         = width;
+  level.height        = height;
+  level.tile_size     = tile_size;
+  level.tiles_per_row = tiles_per_row;
+  level.tileset       = tileset;
+  level.tiles_count   = tiles_count;
+  level.tilemap       = tilemap;
+  level.tile_defs     = tile_defs;
 
   return level;
 }
@@ -105,12 +106,12 @@ void draw_level(level *level)
    for (int x = 0; x < level->width; x++) 
     {
       int index        = level->tilemap[y][x];
-      int source_x      = (index % TILES_PER_ROW) * TILE_SIZE;
-      int source_y      = (index) / TILES_PER_ROW * TILE_SIZE;
-      int source_w      = TILE_SIZE;
-      int source_h      = TILE_SIZE;
+      int source_x      = (index % level->tiles_per_row) * level->tile_size;
+      int source_y      = (index) / level->tiles_per_row * level->tile_size;
+      int source_w      = level->tile_size;
+      int source_h      = level->tile_size;
       Rectangle source = { source_x      , source_y      , source_w  , source_h };
-      Rectangle dest   = { x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE }; 
+      Rectangle dest   = { x * level->tile_size, y * level->tile_size, level->tile_size, level->tile_size }; 
 
       DrawTexturePro(*level->tileset, source, dest, (Vector2){0,0}, 0.0f, WHITE);
    }
