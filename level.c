@@ -1,7 +1,19 @@
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "level.h"
+
+static bool is_comment_line(const char *line)
+{
+  while (*line)
+  {
+    if (*line == '#') return true;
+    if (!isspace((unsigned int)*line)) return false;
+    line++;
+  }
+  return false;
+}
 
 level load_level(int tile_size, int tiles_per_row, const char *tilemap_path, const char *tile_defs_path, Texture2D *tileset) 
 {
@@ -34,6 +46,7 @@ level load_level(int tile_size, int tiles_per_row, const char *tilemap_path, con
   int y = 0;
   while(fgets(tilemap_line_buffer, sizeof(tilemap_line_buffer), tilemap_data_file)) 
   {
+    if (is_comment_line(tilemap_line_buffer)) continue;
     // Replace unix and windows line ending with null terminator
     char *newline                = strchr(tilemap_line_buffer, '\n'); 
     if (newline) *newline        = '\0';
@@ -64,6 +77,7 @@ level load_level(int tile_size, int tiles_per_row, const char *tilemap_path, con
 
   while(fgets(tiledef_buffer, sizeof(tiledef_buffer), tiledef_data_file)) 
   {
+    if (is_comment_line(tilemap_line_buffer)) continue;
     // Replace unix and windows line ending with null terminator
     char *newline                = strchr(tiledef_buffer, '\n'); 
     if (newline) *newline        = '\0'; 
