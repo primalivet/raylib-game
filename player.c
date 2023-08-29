@@ -17,6 +17,10 @@ player init_player(int size, Vector2 position, Vector2 velocity)
 
 bool check_tilemap_collision(Rectangle *object, level *level) 
 {
+
+  // TODO: could i retrive the 4 tiles around the player instead of looping over
+  // every tile?
+
   bool colliding = false;
   for (int y = 0; y < level->height; y++)
   {

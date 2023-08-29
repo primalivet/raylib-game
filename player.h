@@ -15,5 +15,6 @@ typedef struct
 player init_player(int size, Vector2 position, Vector2 velocity);
 void   update_player(player *player, level *level);
 void   draw_player(player *player);
+bool check_tilemap_collision(Rectangle *object, level *level);
 
 #endif
