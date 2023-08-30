@@ -5,12 +5,14 @@
 #include "level.h"
 
 typedef struct {
+  int id;
   Vector2 position;
   Vector2 velocity;
   int size;
 } enemy;
 
 enemy init_enemy(int size, Vector2 position);
+void load_enemies(const char *enemies_path);
 void update_enemy(enemy *enemy, level *level);
 void draw_enemy(enemy *enemy);
 

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "level.h"
 
+// TODO: move to common place, duplicated in enemy.c
 static bool is_comment_line(const char *line)
 {
   while (*line)

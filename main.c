@@ -40,6 +40,7 @@ int main(void)
   level level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
   player player   = init_player(level.tile_size, (Vector2){3.0f * level.tile_size, 3.0f * level.tile_size}, (Vector2){0.0f, 0.0f});
   Camera2D camera = init_camera(player.position, (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f }, 2.0f);
+  load_enemies("resources/enemies.txt");
   enemy enemy = init_enemy(10.0f, (Vector2){5.0f * level.tile_size, 3.0f * level.tile_size });
 
   while(!WindowShouldClose()) 
