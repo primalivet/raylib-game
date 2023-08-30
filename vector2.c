@@ -10,3 +10,11 @@ Vector2 clamp_vector2(Vector2 position, Rectangle boundary)
   return clamped;
 }
 
+Vector2 add_vector2(Vector2 a, Vector2 b) 
+{
+  Vector2 sum = a;
+  sum.x += b.x;
+  sum.y += b.y;
+  return sum;
+}
+
