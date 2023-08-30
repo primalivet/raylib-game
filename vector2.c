@@ -1,3 +1,4 @@
+#include <math.h>
 #include <raylib.h>
 
 Vector2 clamp_vector2(Vector2 position, Rectangle boundary) 
@@ -18,3 +19,11 @@ Vector2 add_vector2(Vector2 a, Vector2 b)
   return sum;
 }
 
+Vector2 normalize_vector2(Vector2 v) {
+  float length = sqrt(v.x * v.x + v.y * v.y);
+  if (length == 0) {
+    return v; // prevent div by zero
+  }
+  Vector2 normalized = {v.x / length, v.y / length};
+  return normalized;
+}

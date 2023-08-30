@@ -15,8 +15,9 @@ typedef struct
 } dynlist;
 
 dynlist *list_create(size_t sizeof_item, size_t initial_capacity);
+void list_destroy(dynlist *list);
 size_t list_append(dynlist *list, void *item);
 void *list_get(dynlist *list, size_t index);
-void *list_remove(dynlist *list, size_t index);
+int list_remove(dynlist *list, size_t index);
 
 #endif

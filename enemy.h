@@ -12,7 +12,6 @@ typedef struct {
 } enemy;
 
 enemy init_enemy(int size, Vector2 position);
-void load_enemies(const char *enemies_path);
 void update_enemy(enemy *enemy, level *level);
 void draw_enemy(enemy *enemy);
 
