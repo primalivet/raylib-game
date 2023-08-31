@@ -90,8 +90,8 @@ int main(void)
   Texture tileset   = LoadTexture("resources/tiles-16.png");
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
   size_t  player_id = entities_add_entity(
-    RED,
-    (Rectangle){4.0f * level.tile_size, 4.0f * level.tile_size, TILE_SIZE, TILE_SIZE},
+    WHITE,
+    (Rectangle){4.0f * level.tile_size, 4.0f * level.tile_size, TILE_SIZE / 1.5f, TILE_SIZE / 1.5f},
     (Vector2){0.0f, 0.0f },
     (Vector2){0.0f, 0.0f},
     (Vector2){0.0f, 0.0f},
