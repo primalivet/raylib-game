@@ -13,9 +13,9 @@ LDFLAGS = \
 # Source files and derive object files from source files
 SRC_FILES = vector2.c \
 	    dynlist.c \
+	    level.c \
 	    physics.c \
 	    entity.c \
-	    level.c \
 	    camera.c \
 	    main.c 
 

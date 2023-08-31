@@ -25,7 +25,7 @@ entity *entities_get_entity(size_t id)
   return list_get(state.entities, id);
 }
 
-size_t entities_add_entity(Color color, Vector2 velocity, Vector2 acceleration, Rectangle aabb, bool is_kinematic)
+size_t entities_add_entity(Color color,Rectangle aabb, Vector2 direction,Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed,  bool is_kinematic)
 {
   size_t id = state.entities->length;
   for (size_t i = 0; i < state.entities->length; ++i)
@@ -38,7 +38,7 @@ size_t entities_add_entity(Color color, Vector2 velocity, Vector2 acceleration, 
     }
   }
 
-  size_t body_id = physics_add_body(velocity, acceleration, aabb, is_kinematic);
+  size_t body_id = physics_add_body(aabb, direction, velocity, acceleration, acceleration_factor, friction, max_speed, is_kinematic, id);
 
   entity new_entity = {
     .color    = color,

@@ -9,8 +9,8 @@
 //----------------------------------------------------------------------------- 
 
 #define TITLE         "Game"
-#define SCREEN_WIDTH  320
-#define SCREEN_HEIGHT 240
+#define SCREEN_WIDTH  640
+#define SCREEN_HEIGHT 480
 
 #define TILE_SIZE     16
 #define TILES_PER_ROW 20
@@ -21,6 +21,7 @@
 // OWNED INCLUDES
 //----------------------------------------------------------------------------- 
 
+#include "vector2.h"
 #include "level.h"
 #include "camera.h"
 #include "physics.h"
@@ -28,13 +29,51 @@
 
 
 void read_input(physics_body *player_body) {
-  player_body->velocity.x = 0.0f;
-  player_body->velocity.y = 0.0f;
-  if (IsKeyDown(KEY_LEFT))  player_body->velocity.x -= 2.0f;
-  if (IsKeyDown(KEY_RIGHT)) player_body->velocity.x += 2.0f;
-  if (IsKeyDown(KEY_UP))    player_body->velocity.y -= 2.0f;
-  if (IsKeyDown(KEY_DOWN))  player_body->velocity.y += 2.0f;
+  // Reset player direction
+  player_body->direction.x = 0.0f;
+  player_body->direction.y = 0.0f;
+
+  // Set player direction based on input 
+  if (IsKeyDown(KEY_LEFT))  player_body->direction.x -= 1.0f;
+  if (IsKeyDown(KEY_RIGHT)) player_body->direction.x += 1.0f;
+  if (IsKeyDown(KEY_UP))    player_body->direction.y -= 1.0f;
+  if (IsKeyDown(KEY_DOWN))  player_body->direction.y += 1.0f;
+
+  // Normalize player direction
+  player_body->direction = normalize_vector2(player_body->direction);
 }
+
+bool show_player_debug_body = false;
+void draw_player_debug_body(physics_body *body) {
+  int column_size = 80;
+  int column_height = 70;
+  const char *velocity = TextFormat(
+    "Velocity\nx: %f\ny: %f", 
+    body->velocity.x, 
+    body->velocity.y
+  );
+  const char *position = TextFormat(
+    "Position\nx: %f\ny: %f", 
+    body->aabb.x, 
+    body->aabb.y
+  );
+  const char *acceleration = TextFormat(
+    "Acceleration\nx: %f\ny: %f", 
+    body->acceleration.x, 
+    body->acceleration.y
+  );
+  const char *direction = TextFormat(
+    "Direction\nx: %f\ny: %f", 
+    body->direction.x, 
+    body->direction.y
+  );
+  DrawRectangleRec((Rectangle){0,0, SCREEN_WIDTH, column_height}, BLACK);
+  DrawText(velocity,      column_size  *  0 + 10,10,  10,  BLUE);
+  DrawText(position,      column_size  *  1 + 10,10,  10,  GREEN);
+  DrawText(acceleration,  column_size  *  2 + 10,10,  10,  YELLOW);
+  DrawText(direction,     column_size  *  3 + 10,10,  10,  RED);
+}
+
 
 //----------------------------------------------------------------------------- 
 // MAIN
@@ -52,9 +91,13 @@ int main(void)
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
   size_t  player_id = entities_add_entity(
     RED,
-    (Vector2){0.0f, 0.0f},
-    (Vector2){0.0f, 0.0f},
     (Rectangle){4.0f * level.tile_size, 4.0f * level.tile_size, TILE_SIZE, TILE_SIZE},
+    (Vector2){0.0f, 0.0f },
+    (Vector2){0.0f, 0.0f},
+    (Vector2){0.0f, 0.0f},
+    0.5f,
+    0.25f,
+    1.25f,
     true 
   );
   entity *player = entities_get_entity(player_id);
@@ -71,12 +114,18 @@ int main(void)
     read_input(player_body);
     update_camera(&camera, (Vector2){player_body->aabb.x + (player_body->aabb.width / 2.0f), player_body->aabb.y + (player_body->aabb.height / 2.0f)}); 
 
-    physics_update();
+    physics_update(&level);
 
     BeginDrawing();
+    ClearBackground(BACKGROUND);
+    if (IsKeyPressed(KEY_P)){
+      show_player_debug_body = !show_player_debug_body;
+    }
+    if (show_player_debug_body) {
+      draw_player_debug_body(player_body);
+    }
     BeginMode2D(camera);
 
-    ClearBackground(BACKGROUND);
     draw_level(&level);
 
     DrawRectangleRec(player_body->aabb, player->color);

@@ -3,7 +3,15 @@
 #include <raylib.h>
 
 Vector2 clamp_vector2(Vector2 position, Rectangle boundary);
+float magnitude_vector2(Vector2 v);
 Vector2 add_vector2(Vector2 a, Vector2 b);
+Vector2 add_x_vector2(Vector2 a, Vector2 b);
+Vector2 add_y_vector2(Vector2 a, Vector2 b); 
+Vector2 mult_vector2(Vector2 v, float x);
+Vector2 mult_x_vector2(Vector2 v, float x);
+Vector2 mult_y_vector2(Vector2 v, float x);
+Rectangle set_rect_origin_from_vector2(Rectangle r , Vector2 v);
+Vector2 get_vec_from_rect(Rectangle r);
 Vector2 normalize_vector2(Vector2 v);
 
 #endif

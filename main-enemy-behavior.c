@@ -156,7 +156,7 @@ void DrawBullets(Bullet bullets[], World *world) {
 /**
  * Normalize a Vector2
  */
-Vector2 NormalizeVector2(Vector2 v) {
+Vector2 normalize_vector2(Vector2 v) {
   float length = sqrt(v.x * v.x + v.y * v.y);
   if (length == 0) {
     return v; // prevent div by zero
@@ -178,7 +178,7 @@ float GetDistance(Vector2 v1, Vector2 v2) {
  */
 Vector2 GetSeekVector2(Vector2 origin, Vector2 target) {
   Vector2 seek = {target.x - origin.x, target.y - origin.y};
-  return NormalizeVector2(seek);
+  return normalize_vector2(seek);
 }
 
 /**
@@ -206,7 +206,7 @@ Vector2 GetSeperationVector2(Actor *actor, Actor *actors) {
       seperation.x /= count;
       seperation.y /= count;
       // Might need to scale here
-      seperation = NormalizeVector2(seperation);
+      seperation = normalize_vector2(seperation);
     }
   }
   return seperation;
@@ -228,7 +228,7 @@ Vector2 GetCohesionAvoidanceVector2(Actor *actor, Actor *actors) {
     avaragePosition.y /= count;
     Vector2 awayFromAvaragePosition = {actor->position.x - avaragePosition.x,
                                        actor->position.y - avaragePosition.y};
-    return NormalizeVector2(awayFromAvaragePosition);
+    return normalize_vector2(awayFromAvaragePosition);
   }
 
   return (Vector2){0, 0};
@@ -283,7 +283,7 @@ void CollisionActors(Actor *a, Actor *b) {
   // TODO: this seem to be not working at all. Velocity is basically as is.
   Vector2 collision = {b->position.x - a->position.x,
                        b->position.y - a->position.y};
-  Vector2 normalized = NormalizeVector2(collision);
+  Vector2 normalized = normalize_vector2(collision);
   a->velocity.x = normalized.x * COLLISION_ACCELERATION;
   a->velocity.y = normalized.y * COLLISION_ACCELERATION;
   b->velocity.x = -normalized.x * COLLISION_ACCELERATION;
