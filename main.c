@@ -95,9 +95,9 @@ int main(void)
     (Vector2){0.0f, 0.0f },
     (Vector2){0.0f, 0.0f},
     (Vector2){0.0f, 0.0f},
-    0.5f,
+    1.0f,
     0.25f,
-    1.25f,
+    4.0f,
     true 
   );
   entity *player = entities_get_entity(player_id);

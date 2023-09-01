@@ -81,7 +81,7 @@ size_t physics_add_body(Rectangle aabb, Vector2 direction, Vector2 velocity, Vec
 }
 
 // TODO: move elsewhere
-bool check_tilemap_collision(Rectangle *object, level *level) 
+bool physics_intersect_tilemap(Rectangle *object, level *level) 
 {
 
   // TODO: could i retrive the 4 tiles around the player instead of looping over
@@ -142,7 +142,7 @@ void physics_update(level *level)
     proposed_aabb_y.y         += proposed_velocity_y;      // Apply proposed velocity to AABB
 
 
-    if (check_tilemap_collision(&proposed_aabb_x , level)) {
+    if (physics_intersect_tilemap(&proposed_aabb_x , level)) {
       // TODO: add proper tilemap collision response for x axis
       float response_velocity_x = fabs(proposed_velocity_x) >= body->max_speed ? body->velocity.x * -1.0f : 0.0f;
       body->velocity.x = response_velocity_x;
@@ -150,7 +150,7 @@ void physics_update(level *level)
       body->velocity.x = proposed_velocity_x;
     }
 
-    if (check_tilemap_collision(&proposed_aabb_y , level)) {
+    if (physics_intersect_tilemap(&proposed_aabb_y , level)) {
       // TODO: add proper tilemap collision response
       float response_velocity_y = fabs(proposed_velocity_y) >= body->max_speed ? body->velocity.y * -1.0f : 0.0f;
       body->velocity.y = response_velocity_y;
