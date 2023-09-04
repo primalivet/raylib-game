@@ -174,14 +174,6 @@ float GetDistance(Vector2 v1, Vector2 v2) {
 }
 
 /**
- * Get a vector pointing from "origin" towards "target"
- */
-Vector2 GetSeekVector2(Vector2 origin, Vector2 target) {
-  Vector2 seek = {target.x - origin.x, target.y - origin.y};
-  return normalize_vector2(seek);
-}
-
-/**
  * Get a vector in a direction to avoid collision
  */
 Vector2 GetSeperationVector2(Actor *actor, Actor *actors) {

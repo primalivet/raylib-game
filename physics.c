@@ -143,17 +143,27 @@ void physics_update(level *level)
 
 
     if (physics_intersect_tilemap(&proposed_aabb_x , level)) {
-      // TODO: add proper tilemap collision response for x axis
-      float response_velocity_x = fabs(proposed_velocity_x) >= body->max_speed ? body->velocity.x * -1.0f : 0.0f;
-      body->velocity.x = response_velocity_x;
+      if (body->is_kinematic) {
+        // TODO: add proper tilemap collision response for x axis
+        float response_velocity_x = fabs(proposed_velocity_x) >= body->max_speed ? body->velocity.x * -1.0f : 0.0f;
+        body->velocity.x = response_velocity_x;
+      } else {
+        body->velocity.x *= -1;
+        body->direction.x *= -1;
+      }
     } else {
       body->velocity.x = proposed_velocity_x;
     }
 
     if (physics_intersect_tilemap(&proposed_aabb_y , level)) {
-      // TODO: add proper tilemap collision response
-      float response_velocity_y = fabs(proposed_velocity_y) >= body->max_speed ? body->velocity.y * -1.0f : 0.0f;
-      body->velocity.y = response_velocity_y;
+      if (body->is_kinematic) {
+        // TODO: add proper tilemap collision response
+        float response_velocity_y = fabs(proposed_velocity_y) >= body->max_speed ? body->velocity.y * -1.0f : 0.0f;
+        body->velocity.y = response_velocity_y;
+      } else {
+        body->velocity.y *= -1;
+        body->direction.y *= -1;
+      }
     } else {
       body->velocity.y = proposed_velocity_y;
     }

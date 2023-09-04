@@ -42,7 +42,8 @@ size_t entities_add_entity(Color color,Rectangle aabb, Vector2 direction,Vector2
 
   entity new_entity = {
     .color    = color,
-    .body_id  = body_id
+    .body_id  = body_id,
+    .is_active = true
   };
 
   if (id == state.entities->length) {

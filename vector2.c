@@ -1,6 +1,16 @@
 #include <math.h>
 #include <raylib.h>
 
+
+Vector2 normalize_vector2(Vector2 v) {
+  float length = sqrt(v.x * v.x + v.y * v.y);
+  if (length == 0) {
+    return v; // prevent div by zero
+  }
+  Vector2 normalized = {v.x / length, v.y / length};
+  return normalized;
+}
+
 Vector2 clamp_vector2(Vector2 position, Rectangle boundary) 
 {
   Vector2 clamped = position;
@@ -33,6 +43,11 @@ Vector2 add_y_vector2(Vector2 a, Vector2 b)
   return sum;
 }
 
+Vector2 seek_vector2(Vector2 origin, Vector2 target) {
+  Vector2 seek = {target.x - origin.x, target.y - origin.y};
+  return seek;
+}
+
 /**
  * Get the magnitude "straight line distance" (from 0,0) of a vector
 */
@@ -63,6 +78,13 @@ Vector2 mult_y_vector2(Vector2 v, float x)
   return mult;
 }
 
+float euclidean_distance(Vector2 v1, Vector2 v2) 
+{
+  float a = fabs(v2.x - v1.x);
+  float b = fabs(v2.y - v1.y);
+  return sqrt(a * a + b * b);
+}
+
 // TODO: move to better place
 Rectangle set_rect_origin_from_vector2(Rectangle r , Vector2 v)
 {
@@ -74,13 +96,4 @@ Rectangle set_rect_origin_from_vector2(Rectangle r , Vector2 v)
 Vector2 get_vec_from_rect(Rectangle r)
 {
   return (Vector2){r.x, r.y};
-}
-
-Vector2 normalize_vector2(Vector2 v) {
-  float length = sqrt(v.x * v.x + v.y * v.y);
-  if (length == 0) {
-    return v; // prevent div by zero
-  }
-  Vector2 normalized = {v.x / length, v.y / length};
-  return normalized;
 }
