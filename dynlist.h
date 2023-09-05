@@ -14,10 +14,10 @@ typedef struct
   void *items;
 } dynlist;
 
-dynlist *list_create(size_t sizeof_item, size_t initial_capacity);
-void list_destroy(dynlist *list);
-size_t list_append(dynlist *list, void *item);
-void *list_get(dynlist *list, size_t index);
-int list_remove(dynlist *list, size_t index);
+dynlist *dynlist_allocate(size_t sizeof_item, size_t initial_capacity);
+void dynlist_free(dynlist *list);
+size_t dynlist_append(dynlist *list, void *item);
+void *dynlist_get_at(dynlist *list, size_t index);
+int dynlist_remove_at(dynlist *list, size_t index);
 
 #endif

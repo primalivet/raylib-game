@@ -10,20 +10,20 @@ static physics_state state;
 
 void physics_init(float gravity)
 {
-  state.bodies  = list_create(sizeof(physics_body), 0);
+  state.bodies  = dynlist_allocate(sizeof(physics_body), 0);
   state.gravity = gravity;
   // TODO: implement tick tick rate
 }
 
 void physics_deinit()
 {
-  list_destroy(state.bodies);
+  dynlist_free(state.bodies);
   state.bodies = NULL;
 }
 
 physics_body *physics_get_body(size_t id)
 {
-  return list_get(state.bodies, id);
+  return dynlist_get_at(state.bodies, id);
 }
 
 static physics_body physics_create_default_body()
@@ -50,7 +50,7 @@ size_t physics_add_body(Rectangle aabb, Vector2 direction, Vector2 velocity, Vec
 
   for (size_t i = 0; i < state.bodies->length; ++i)
   {
-    physics_body *body = list_get(state.bodies, i);
+    physics_body *body = dynlist_get_at(state.bodies, i);
     if (!body->is_active)
     { 
       id = i; 
@@ -70,10 +70,10 @@ size_t physics_add_body(Rectangle aabb, Vector2 direction, Vector2 velocity, Vec
   new_body.entity_id    = entity_id;
 
   if (id == state.bodies->length) {
-    list_append(state.bodies, &new_body);
+    dynlist_append(state.bodies, &new_body);
   }
   else {
-    physics_body *existing_body = list_get(state.bodies, id);
+    physics_body *existing_body = dynlist_get_at(state.bodies, id);
     *existing_body = new_body;
   }
 
@@ -114,8 +114,7 @@ void physics_update(level *level)
   physics_body *body;
   for (size_t i = 0; i < state.bodies->length; i++)
   {
-    body = list_get(state.bodies, i);
-    /* entity *entity = entities_get_entity(body->entity_id); */
+    body = dynlist_get_at(state.bodies, i);
 
     // Apply acceleration
     body->acceleration = mult_vector2(body->direction, body->acceleration_factor);

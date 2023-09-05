@@ -6,12 +6,12 @@ static entities_state state;
 
 void entities_init()
 {
-  state.entities  = list_create(sizeof(entity), 0);
+  state.entities  = dynlist_allocate(sizeof(entity), 0);
 }
 
 void entities_deinit()
 {
-  list_destroy(state.entities);
+  dynlist_free(state.entities);
   state.entities = NULL;
 }
 
@@ -22,7 +22,7 @@ size_t entities_count()
 
 entity *entities_get_entity(size_t id)
 {
-  return list_get(state.entities, id);
+  return dynlist_get_at(state.entities, id);
 }
 
 size_t entities_add_entity(Color color,Rectangle aabb, Vector2 direction,Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed,  bool is_kinematic)
@@ -30,7 +30,7 @@ size_t entities_add_entity(Color color,Rectangle aabb, Vector2 direction,Vector2
   size_t id = state.entities->length;
   for (size_t i = 0; i < state.entities->length; ++i)
   {
-    entity *entity = list_get(state.entities, i);
+    entity *entity = dynlist_get_at(state.entities, i);
     if (!entity->is_active) 
     {
       id = i;
@@ -47,9 +47,9 @@ size_t entities_add_entity(Color color,Rectangle aabb, Vector2 direction,Vector2
   };
 
   if (id == state.entities->length) {
-    list_append(state.entities, &new_entity);
+    dynlist_append(state.entities, &new_entity);
   } else {
-    entity *existing_entity = list_get(state.entities, id);
+    entity *existing_entity = dynlist_get_at(state.entities, id);
     *existing_entity = new_entity;
   }
 

@@ -4,7 +4,7 @@
 #include "utils.h"
 #include "dynlist.h"
 
-dynlist *list_create(size_t sizeof_item, size_t initial_capacity) 
+dynlist *dynlist_allocate(size_t sizeof_item, size_t initial_capacity) 
 {
   dynlist *list = (dynlist *)malloc(sizeof(dynlist));
   if (!list) 
@@ -24,7 +24,7 @@ dynlist *list_create(size_t sizeof_item, size_t initial_capacity)
   return list;
 }
 
-void list_destroy(dynlist *list) 
+void dynlist_free(dynlist *list) 
 {
   if (list) {
     if (list->items){
@@ -34,7 +34,7 @@ void list_destroy(dynlist *list)
   }
 }
 
-size_t list_append(dynlist *list, void *item) 
+size_t dynlist_append(dynlist *list, void *item) 
 {
   if (list->length == list->capacity)
   {
@@ -51,7 +51,7 @@ size_t list_append(dynlist *list, void *item)
   return index;
 }
 
-void *list_get(dynlist *list, size_t index)
+void *dynlist_get_at(dynlist *list, size_t index)
 {
   if (index >= list->length) 
   {
@@ -60,7 +60,7 @@ void *list_get(dynlist *list, size_t index)
   return list->items + index * list->sizeof_item;
 }
 
-int list_remove(dynlist *list, size_t index)
+int dynlist_remove_at(dynlist *list, size_t index)
 {
   if (list->length == 0) 
   {
