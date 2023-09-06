@@ -3,9 +3,6 @@
 
 #include <stdlib.h>
 
-#define PRINT_EXIT(C, ...) printf(__VA_ARGS__); exit(C);
-#define PRINT_RETURN(R, ...) printf(__VA_ARGS__); return(R);
-
 typedef struct 
 {
   size_t length;
