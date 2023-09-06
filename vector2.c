@@ -85,6 +85,14 @@ float euclidean_distance(Vector2 v1, Vector2 v2)
   return sqrt(a * a + b * b);
 }
 
+float manhattan_distance(Vector2 v1, Vector2 v2) 
+{
+  float a = fabs(v2.x - v1.x);
+  float b = fabs(v2.y - v1.y);
+  return a + b;
+}
+
+
 // TODO: move to better place
 Rectangle set_rect_origin_from_vector2(Rectangle r , Vector2 v)
 {

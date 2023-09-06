@@ -11,6 +11,7 @@ Vector2 mult_vector2(Vector2 v, float x);
 Vector2 mult_x_vector2(Vector2 v, float x);
 Vector2 mult_y_vector2(Vector2 v, float x);
 float euclidean_distance(Vector2 v1, Vector2 v2);
+float manhattan_distance(Vector2 v1, Vector2 v2);
 Vector2 seek_vector2(Vector2 origin, Vector2 target);
 Rectangle set_rect_origin_from_vector2(Rectangle r , Vector2 v);
 Vector2 get_vec_from_rect(Rectangle r);
