@@ -15,10 +15,11 @@ int test_astar_search() {
   InitWindow(420, 320, "Test window");
   Texture tileset   = LoadTexture("resources/tiles-16.png");
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
-  Rectangle origin =  (Rectangle){ 3 * TILE_SIZE, 3 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-  Rectangle goal = (Rectangle){ 3 * TILE_SIZE , 10 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-  astar_allocate(&level);
-  dynlist *path = astar_search(&origin, &goal);
+  Rectangle origin =  (Rectangle){ 0 * TILE_SIZE, 0 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+  Rectangle goal = (Rectangle){ 4 * TILE_SIZE , 4 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+  astar_allocate(level.width, level.height);
+  dynlist *path = astar_search(&(Vector2){ origin.x / TILE_SIZE, origin.y / TILE_SIZE },
+                               &(Vector2){ goal.x / TILE_SIZE, goal.y / TILE_SIZE });
 
   while(!WindowShouldClose()) {
     BeginDrawing();
@@ -45,6 +46,16 @@ int test_astar_search() {
 
   CloseWindow();
 
+  printf("Searching from x: %f, y: %f to x: %f, y: %f\n", origin.x / TILE_SIZE, origin.y / TILE_SIZE, goal.x / TILE_SIZE, goal.y / TILE_SIZE);
+  if(path) {
+    printf("Path length: %lu\n", path->length);
+    for (size_t i = 0; i < path->length; i++) {
+      astar_node *step = dynlist_get_at(path, i);
+      printf("x: %d, y: %d (f_cost: %f, g_cost: %f, h_cost: %f)\n", step->x, step->y, step->f_cost, step->g_cost, step->h_cost);
+    }
+  } else {
+    printf("Path not found\n");
+  }
   astar_free();
   return 0;
 }

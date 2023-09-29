@@ -5,6 +5,13 @@
 #include "level.h"
 #include "physics.h"
 
+typedef enum {
+  ADD_TO_OPEN,
+  REPLACE_IN_OPEN,
+  REPLACE_IN_CLOSED,
+  SKIP
+} node_action;
+
 typedef struct astar_node {
   int x;
   int y;
@@ -18,13 +25,14 @@ typedef struct astar_node {
 typedef struct {
   int grid_width;
   int grid_height;
-  int tile_size;
   astar_node **grid;
+
 } astar_state;
 
 
-void astar_allocate(level *level);
+void astar_allocate(int width, int height);
+int astar_compare_nodes(const void *a, const void *b);
 void astar_free();
-dynlist *astar_search(Rectangle *origin, Rectangle *target);
+dynlist *astar_search(Vector2 *origin, Vector2 *target);
 
 #endif

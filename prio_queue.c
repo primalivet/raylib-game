@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "prio_queue.h"
 
-prio_queue *queue_allocate(size_t initial_capacity, float load_factor) {
+prio_queue *queue_allocate(size_t initial_capacity, float load_factor, int (*compare)(const void* a, const void* b)) {
   prio_queue *queue = (prio_queue *)malloc(sizeof(prio_queue));
   if (queue == NULL) {
     printf("Failed to allocate memory for queue\n");
@@ -27,6 +27,7 @@ prio_queue *queue_allocate(size_t initial_capacity, float load_factor) {
   queue->capacity = initial_capacity;
   queue->length = 0;
   queue->load_factor = load_factor;
+  queue->compare = compare;
   return queue;
 }
 
@@ -56,18 +57,34 @@ void queue_enqueue(prio_queue *queue, prio_item *item) {
   queue->length++;
 }
 
+void queue_replace_at(prio_queue *queue, size_t index, prio_item *item) {
+  if (index >= queue->length) {
+    printf("Index out of bounds for queue_replace_at\n");
+    exit(1);
+  }
+  queue->items[index] = *item;
+}
+
 prio_item *queue_dequeue(prio_queue *queue) {
   if (queue->length == 0) {
     printf("Cant dequeue from an empty queue\n");
     return NULL;
   }
+
   prio_item *highest = NULL;
   int index = 0;
   for (size_t i = 0; i < queue->length; i++) {
-    if (highest == NULL || queue->items[i].priority > highest->priority) {
-      index = i;
+    if (highest == NULL) {
       highest = &queue->items[i];
-    }
+      index = i;
+      continue;
+    } 
+
+    int result = queue->compare(highest, &queue->items[i]);
+
+    if (result < 0) {
+      highest = &queue->items[i];
+    } 
   }
 
   queue->length--;

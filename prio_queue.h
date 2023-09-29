@@ -22,17 +22,21 @@ typedef struct {
   float load_factor;
   // The priority items
   prio_item *items;
+  int (*compare)(const void* a, const void* b);
 } prio_queue;
 
 
 // Create a new priority queue
-prio_queue *queue_allocate(size_t initial_capacity, float load_factor);
+prio_queue *queue_allocate(size_t initial_capacity, float load_factor, int (*compare)(const void* a, const void* b));
 
 // Destroy and free the memory of the priority queue
 void queue_free(prio_queue *queue);
 
 // Add item to the priority queue
 void queue_enqueue(prio_queue *queue, prio_item *item);
+
+// Replace an item in the priority queue
+void queue_replace_at(prio_queue *queue, size_t index, prio_item *item);
 
 // Remove item from the priority queue
 prio_item *queue_dequeue(prio_queue *queue);

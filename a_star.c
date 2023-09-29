@@ -11,29 +11,49 @@
 
 static astar_state state;
 
-void astar_allocate(level *level) {
+/**
+ * Compare the cost of two astar nodes, both f_cost and h_cost are considered
+ *
+ * returns -1 if a is less than b
+ * returns 0 if a is equal to b
+ * returns 1 if a is greater than b
+ */
+int astar_compare_nodes(const void *a, const void *b) {
+  astar_node *node_a = (astar_node *)a;
+  astar_node *node_b = (astar_node *)b;
+
+  // Compare by Full cost
+  if (node_a->f_cost < node_b->f_cost) return -1;
+  if (node_a->f_cost > node_b->f_cost) return 1;
+
+  // Compare by Heuristic cost
+  if (node_a->h_cost < node_b->h_cost) return -1;
+  if (node_a->h_cost > node_b->h_cost) return 1;
+
+  return 0;
+}
+
+void astar_allocate(int width, int height) {
   // TODO: this can not be of type astar_node, since we have to generate them in the algorithm
   // This should rather be just a grid of number, or maybe a tile_defs
-  astar_node **grid = malloc(level->height * sizeof(astar_node *));
+  astar_node **grid = malloc(height * sizeof(astar_node *));
   if (!grid) {
     printf("Failed to allocate grid\n");
     exit(1);
   }
-  for (int y = 0; y < level->height; y++) {
-    grid[y] = malloc(level->width * sizeof(astar_node));
+  for (int y = 0; y < height; y++) {
+    grid[y] = malloc(width * sizeof(astar_node));
     if (!grid[y]) {
       printf("Failed to allocate grid row %d\n", y);
     }
-    for (int x = 0; x < level->width; x++) {
+    for (int x = 0; x < width; x++) {
       grid[y][x].x = x;
       grid[y][x].y = y;
-      grid[y][x].is_walkable = level->tile_defs[level->tilemap[y][x]].is_walkable;
     }
   }
 
-  state.grid_width = level->width;
-  state.grid_height = level->height;
-  state.tile_size = level->tile_size;
+  state.grid_width = width;
+  state.grid_height = height;
   state.grid = grid;
 }
 
@@ -55,24 +75,24 @@ void free_reconstructed_path(dynlist *path) {
 }
 
 bool is_valid_grid_position(Vector2 position) {
-  return (position.x >= 0 && 
-  position.x <= state.grid_width &&
-  position.y >= 0 &&
-  position.x <= state.grid_height);
+  return (position.x > 0 && 
+  position.x < state.grid_width &&
+  position.y > 0 &&
+  position.x < state.grid_height);
 }
 
-dynlist *astar_search(Rectangle *origin, Rectangle *goal)
+dynlist *astar_search(Vector2 *origin, Vector2 *goal)
 {
-  prio_queue *open_set   = queue_allocate(sizeof(astar_node), 0.5f);
-  prio_queue *closed_set = queue_allocate(sizeof(astar_node), 0.5f);
+  prio_queue *open_set   = queue_allocate(sizeof(astar_node), 0.5f, astar_compare_nodes);
+  prio_queue *closed_set = queue_allocate(sizeof(astar_node), 0.5f, astar_compare_nodes);
 
   float h_cost = manhattan_distance((Vector2){origin->x, origin->y}, 
-                                    (Vector2){goal->x, goal->y}) / state.tile_size;
+                                    (Vector2){goal->x, goal->y});
 
   astar_node *origin_node  = malloc(sizeof(astar_node));
   if (!origin_node) { printf("Failed to allocate node origin\n"); exit(1); }
-  origin_node->x           = origin->x / state.tile_size;
-  origin_node->y           = origin->y / state.tile_size;
+  origin_node->x           = origin->x;
+  origin_node->y           = origin->y;
   origin_node->g_cost      = 0;
   origin_node->h_cost      = h_cost;
   origin_node->f_cost      =  0;
@@ -81,8 +101,8 @@ dynlist *astar_search(Rectangle *origin, Rectangle *goal)
 
   astar_node *goal_node  = malloc(sizeof(astar_node));
   if (!goal_node) { printf("Failed to allocate node goal\n"); exit(1); }
-  goal_node->x           = goal->x / state.tile_size;
-  goal_node->y           = goal->y / state.tile_size;
+  goal_node->x           = goal->x;
+  goal_node->y           = goal->y;
   goal_node->g_cost      = INFINITY;
   goal_node->h_cost      = 0;
   goal_node->f_cost      = INFINITY + 0;
@@ -116,6 +136,7 @@ dynlist *astar_search(Rectangle *origin, Rectangle *goal)
     astar_node **neighbours = malloc(8 * sizeof(astar_node *));
     if (!neighbours) { printf("Failed to allocate neighbours\n"); exit(1); }
 
+    printf("Current:  (x: %d, y: %d) hcost: %f, gcost: %f, fcost: %f\n", q->x, q->y, q->h_cost, q->g_cost, q->f_cost);
     // Generate neighbours from cardinal positions
     int neighbours_count = 0;
     for (int i = 0; i < 8; i++) {
@@ -123,15 +144,16 @@ dynlist *astar_search(Rectangle *origin, Rectangle *goal)
         astar_node *neighbour = malloc(sizeof(astar_node));
         if (!neighbour) { printf("Failed to allocate neighbour\n"); exit(1); }
         Vector2 q_pos         = (Vector2){ q->x, q->y };
+        Vector2 goal_pos      = (Vector2){ goal->x, goal->y };
         Vector2 neighbour_pos = (Vector2){ cardinal_positions[i].x, cardinal_positions[i].y };
-        float g_cost          = q->g_cost + manhattan_distance(q_pos, neighbour_pos);
-        float h_cost          = manhattan_distance(neighbour_pos, (Vector2){ goal->x, goal->y });
-        float f_cost          = g_cost + neighbour->h_cost;
+        float g_cost          = q->g_cost + manhattan_distance(neighbour_pos, q_pos);
+        float h_cost          = manhattan_distance(neighbour_pos, goal_pos);
+        float f_cost          = g_cost + h_cost;
         neighbour->x          = neighbour_pos.x;
         neighbour->y          = neighbour_pos.y;
-        neighbour->g_cost     = g_cost;
-        neighbour->h_cost     = h_cost;
-        neighbour->f_cost     = f_cost;
+        neighbour->g_cost     = g_cost; // Goal cost
+        neighbour->h_cost     = h_cost; // Heuristic cost
+        neighbour->f_cost     = f_cost; // Full cost
         neighbour->parent     = q;
 
         // Add neighbour to neighbours arrayt. Increase count only if we append to the array
@@ -142,40 +164,44 @@ dynlist *astar_search(Rectangle *origin, Rectangle *goal)
           return reconstruct_path(neighbour);
         }
 
-
-        bool skip_neighbour             = false;
-        bool neighbour_is_in_open_set   = false;
-        bool neighbour_is_in_closed_set = false;
+        node_action handle_node = ADD_TO_OPEN;
+        int existing_index = -1;
 
         // Search for neighbour in open_set
         for (size_t i = 0; i < open_set->length; i++) {
-          astar_node *open_set_node = open_set->items[i].data;
-          neighbour_is_in_open_set = open_set_node->x == neighbour->x && open_set_node->y == neighbour->y;
-          bool existing_has_lower_f_cost = open_set_node->f_cost <= neighbour->f_cost;
-          if (neighbour_is_in_open_set && existing_has_lower_f_cost) {
-            skip_neighbour = true;
+          astar_node *open_set_node     = open_set->items[i].data;
+          bool already_exists           = open_set_node->x       == neighbour->x && open_set_node->y == neighbour->y;
+          bool existing_has_higher_prio = open_set_node->f_cost > neighbour->f_cost;
+          if (already_exists) {
+            existing_index = i;
+            if (!existing_has_higher_prio) handle_node = REPLACE_IN_OPEN; 
+            if (existing_has_higher_prio) handle_node = SKIP;
           }
         }
-
         // Search for neighbour in closed_set
         for (size_t i = 0; i < closed_set->length; i++) {
-          astar_node *closed_set_node = closed_set->items[i].data;
-          neighbour_is_in_closed_set = closed_set_node->x == neighbour->x && closed_set_node->y == neighbour->y;
-          bool existing_has_lower_f_cost = closed_set_node->f_cost <= neighbour->f_cost;
-          if (neighbour_is_in_closed_set && existing_has_lower_f_cost) {
-            skip_neighbour = true;
+          astar_node *closed_set_node     = closed_set->items[i].data;
+          bool already_exists             = closed_set_node->x == neighbour->x && closed_set_node->y == neighbour->y;
+          bool existing_has_higher_prio   = closed_set_node->f_cost > neighbour->f_cost;
+          if (already_exists) {
+            existing_index = i;
+            if (!existing_has_higher_prio) handle_node = REPLACE_IN_CLOSED;
+            if (existing_has_higher_prio) handle_node = SKIP; // skip
           }
         }
 
-        if (!skip_neighbour) {
-          prio_item *p_item = malloc(sizeof(prio_item));
-          if (!p_item) { printf("Failed to allocate p_item\n"); exit(1); }
-          p_item->priority = -neighbour->f_cost;
-          p_item->data     = neighbour;
-          queue_enqueue(open_set, p_item);
-        } else {
-          // Free skipped neighbour
-          free(neighbour);
+        prio_item *p_item = malloc(sizeof(prio_item));
+        if (!p_item) { printf("Failed to allocate p_item\n"); exit(1); }
+        p_item->priority = -neighbour->f_cost;
+        p_item->data     = neighbour;
+
+        printf("Neighbour (x: %d, y: %d) hcost: %f, gcost: %f, fcost: %f\n", neighbour->x, neighbour->y, neighbour->h_cost, neighbour->g_cost, neighbour->f_cost);
+
+        switch(handle_node) {
+          case ADD_TO_OPEN       : { queue_enqueue(open_set, p_item);} break; 
+          case REPLACE_IN_OPEN   : { queue_replace_at(open_set, existing_index, p_item); } break; 
+          case REPLACE_IN_CLOSED : { queue_replace_at(closed_set, existing_index, p_item); } break; 
+          case SKIP              : { free(p_item); free(neighbour); } break; 
         }
       }
     }
