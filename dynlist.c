@@ -54,6 +54,37 @@ size_t dynlist_append(dynlist *list, void *item)
   return index;
 }
 
+size_t dynlist_prepend(dynlist *list, void *item) 
+{
+  if (list->length == list->capacity)
+  {
+    list->capacity = list->capacity > 0 ?  list->capacity * 2 : 1; // double the capacity, account for 0 * 2 = 0
+    void *items = (void *)realloc(list->items, list->capacity * list->sizeof_item);
+    if (!items) 
+    { 
+      printf("Failed to reallocate memory for expanding capacity of dynlist\n");
+      exit(1);
+    }
+    list->items    = items;
+  }
+
+  memmove(
+    list->items + list->sizeof_item, // Where to move to (the second position in the list)
+    list->items,                     // Where to start moving from (the start of the list)
+    list->length * list->sizeof_item // Number of bytes to move (the whole list)
+  );
+
+  memcpy(
+    list->items,      // Dest
+    item,             // Src
+    list->sizeof_item // Size
+  );
+
+  list->length++;
+
+  return 0; // always return the first position, since we're prepending
+}
+
 void *dynlist_get_at(dynlist *list, size_t index)
 {
   if (index >= list->length) 
@@ -76,9 +107,9 @@ int dynlist_remove_at(dynlist *list, size_t index)
     printf("Falied to remove item in dynlist as index is out of bounds\n");
     return -1;
   }
-  --list->length;                                                   // decrease length
-  char *removed = (char*)list->items + index * list->sizeof_item;        // take the item to be removed
+  --list->length;                                                              // decrease length
+  char *removed = (char*)list->items + index * list->sizeof_item;              // take the item to be removed
   char *last    = (char*)list->items + (list->length - 1) * list->sizeof_item; // take the last item
-  memcpy(removed, last, list->sizeof_item);                         // place the last item at the index of the item to be removed
+  memcpy(removed, last, list->sizeof_item);                                    // place the last item at the index of the item to be removed
   return 0;
 }

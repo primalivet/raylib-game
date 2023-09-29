@@ -1,6 +1,7 @@
 CC = cc
 
 CFLAGS = \
+	 -g \
 	 -Wall \
 	 -Wextra \
 	 -Werror \
@@ -12,6 +13,8 @@ LDFLAGS = \
 
 # Source files and derive object files from source files
 SRC_FILES = vector2.c \
+	    prio_queue.c \
+	    a_star.c \
 	    dynlist.c \
 	    level.c \
 	    physics.c \

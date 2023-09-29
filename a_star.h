@@ -25,6 +25,6 @@ typedef struct {
 
 void astar_allocate(level *level);
 void astar_free();
-dynlist *astar_search(physics_body *origin, physics_body *target);
+dynlist *astar_search(Rectangle *origin, Rectangle *target);
 
 #endif
