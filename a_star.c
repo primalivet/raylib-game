@@ -167,7 +167,8 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
   queue_enqueue(open_set, origin_item);
 
   int iteration = 1;
-  while(open_set->length != 0 && iteration < 10) {
+  int max_iterations = 100;
+  while(open_set->length != 0 && iteration < max_iterations) {
     // Get the highest prio item data (lowest f_cost)
 
     prio_item *q_item = queue_dequeue(open_set);

@@ -16,7 +16,7 @@ int test_astar_search() {
   Texture tileset   = LoadTexture("resources/tiles-16.png");
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
   Rectangle origin =  (Rectangle){ 0 * TILE_SIZE, 0 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-  Rectangle goal = (Rectangle){ 5 * TILE_SIZE , 8 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+  Rectangle goal = (Rectangle){ 8 * TILE_SIZE , 15 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
   astar_allocate(level.width, level.height);
   dynlist *path = astar_search(&(Vector2){ origin.x / TILE_SIZE, origin.y / TILE_SIZE },
                                &(Vector2){ goal.x / TILE_SIZE, goal.y / TILE_SIZE });
