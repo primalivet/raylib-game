@@ -80,8 +80,8 @@ Vector2 mult_y_vector2(Vector2 v, float x)
 
 float euclidean_distance(Vector2 v1, Vector2 v2) 
 {
-  float a = fabs(v2.x - v1.x);
-  float b = fabs(v2.y - v1.y);
+  float a = v2.x - v1.x;
+  float b = v2.y - v1.y;
   return sqrt(a * a + b * b);
 }
 
