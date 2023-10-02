@@ -15,9 +15,17 @@ int test_astar_search() {
   InitWindow(420, 320, "Test window");
   Texture tileset   = LoadTexture("resources/tiles-16.png");
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
-  Rectangle origin =  (Rectangle){ 0 * TILE_SIZE, 0 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-  Rectangle goal = (Rectangle){ 8 * TILE_SIZE , 15 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-  astar_allocate(level.width, level.height);
+  int **collision_mask = malloc(sizeof(int) * level.height);
+  for (int y = 0; y < level.height; y++) {
+    collision_mask[y] = malloc(sizeof(int) * level.width);
+    for (int x = 0; x < level.width; x++) {
+      collision_mask[y][x] = level.tile_defs[level.tilemap[y][x]].is_walkable;
+    }
+  }
+
+  Rectangle origin =  (Rectangle){ 3 * TILE_SIZE, 3 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+  Rectangle goal = (Rectangle){ 15 * TILE_SIZE , 15 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+  astar_allocate(level.width, level.height, collision_mask);
   dynlist *path = astar_search(&(Vector2){ origin.x / TILE_SIZE, origin.y / TILE_SIZE },
                                &(Vector2){ goal.x / TILE_SIZE, goal.y / TILE_SIZE });
 

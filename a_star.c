@@ -41,28 +41,10 @@ int astar_compare_nodes(const void *a, const void *b) {
   return 0;
 }
 
-void astar_allocate(int width, int height) {
-  // TODO: this can not be of type astar_node, since we have to generate them in the algorithm
-  // This should rather be just a grid of number, or maybe a tile_defs
-  astar_node **grid = malloc(height * sizeof(astar_node *));
-  if (!grid) {
-    printf("Failed to allocate grid\n");
-    exit(1);
-  }
-  for (int y = 0; y < height; y++) {
-    grid[y] = malloc(width * sizeof(astar_node));
-    if (!grid[y]) {
-      printf("Failed to allocate grid row %d\n", y);
-    }
-    for (int x = 0; x < width; x++) {
-      grid[y][x].x = x;
-      grid[y][x].y = y;
-    }
-  }
-
-  state.grid_width = width;
-  state.grid_height = height;
-  state.grid = grid;
+void astar_allocate(int width, int height, int **collision_mask) {
+  state.collision_mask = collision_mask;
+  state.width = width;
+  state.height = height;
 }
 
 dynlist *reconstruct_path(astar_node *goal_node) {
@@ -82,11 +64,20 @@ void free_reconstructed_path(dynlist *path) {
   dynlist_free(path);
 }
 
-bool is_valid_grid_position(Vector2 position) {
-  return (position.x >= 0 && 
-          position.x <= state.grid_width &&
-          position.y >= 0 &&
-          position.y <= state.grid_height);
+bool is_valid_position(Vector2 position) {
+  int x = (int)position.x;
+  int y = (int)position.y;
+  bool is_within_bounds = position.x >= 0 && 
+                          position.x <= state.width &&
+                          position.y >= 0 &&
+                          position.y <= state.height;
+  if (is_within_bounds) {
+    bool is_walkable = state.collision_mask[y][x];
+    printf("Is walkable: (x: %d, y: %d) = %d\n", x, y, is_walkable ? 1 : 0);
+    return is_walkable;
+  } else {
+    return false;
+  }
 }
 
 int get_queued_node_by_pos(prio_queue *queue, Vector2 pos) {
@@ -145,7 +136,6 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
   origin_node->g_cost      = 0;
   origin_node->h_cost      = h_cost;
   origin_node->f_cost      =  0;
-  origin_node->is_walkable = true;
   origin_node->parent      = NULL;
 
   astar_node *goal_node  = malloc(sizeof(astar_node));
@@ -155,7 +145,6 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
   goal_node->g_cost      = INFINITY;
   goal_node->h_cost      = 0;
   goal_node->f_cost      = INFINITY + 0;
-  goal_node->is_walkable = true;
   goal_node->parent      = NULL;
 
   // Create the staring prio item and att to the open set
@@ -209,7 +198,7 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
         printf("Existing:   (x: %f, y: %f).  Continue loop\n", existing_node->x, existing_node->y);
         continue;
       }
-      if (is_valid_grid_position(cardinal_positions[i])) {
+      if (is_valid_position(cardinal_positions[i])) {
         astar_node *neighbour = malloc(sizeof(astar_node));
         if (!neighbour) { printf("Failed to allocate neighbour\n"); exit(1); }
         /* Vector2 q_pos         = (Vector2){ q->x, q->y }; */
@@ -333,6 +322,4 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
 
 void astar_free()
 {
-  free(state.grid);
-  state.grid = NULL;
 }
