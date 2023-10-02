@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "prio_queue.h"
 
 prio_queue *queue_allocate(size_t initial_capacity, float load_factor, int (*compare)(const void* a, const void* b)) {
@@ -80,19 +81,30 @@ prio_item *queue_dequeue(prio_queue *queue) {
       continue;
     } 
 
+    // -1 higest is less then current 
+    // 0 higest is equal to current
+    // 1 higest is greater than current
     int result = queue->compare(highest, &queue->items[i]);
-
-    if (result < 0) {
+    if (result > 0) {
       highest = &queue->items[i];
-    } 
+      index = i;
+    }
   }
+
+  prio_item *shallow_copy = malloc(sizeof(prio_item));  
+  if (shallow_copy == NULL) {
+    printf("Failed to allocate memory for shallow copy\n");
+    exit(1);
+  }
+
+  memcpy(shallow_copy, highest, sizeof(prio_item));
 
   queue->length--;
   for(size_t i = index; i < queue->length; i++) {
     queue->items[i] = queue->items[i + 1];
   }
 
-  return highest;
+  return shallow_copy;
 }
 
 void queue_free_item_data(prio_item *item) {
