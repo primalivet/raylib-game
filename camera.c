@@ -13,5 +13,5 @@ Camera2D init_camera(Vector2 target, Vector2 offset, float zoom)
 
 void update_camera(Camera2D *camera, Vector2 target) 
 {
-    camera->target = target;
+  camera->target = target;
 }

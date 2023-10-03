@@ -12,7 +12,7 @@
 #define SCREEN_WIDTH  640
 #define SCREEN_HEIGHT 480
 
-#define ENEMIES_COUNT 4
+#define ENEMIES_COUNT 1
 #define TILE_SIZE     16
 #define TILES_PER_ROW 20
 #define TARGET_FPS    60
@@ -27,6 +27,7 @@
 #include "camera.h"
 #include "physics.h"
 #include "entity.h"
+#include "a_star.h"
 
 
 void read_input(physics_body *player_body) {
@@ -45,30 +46,64 @@ void read_input(physics_body *player_body) {
 }
 
 void update_ai_body(physics_body *ai_body, physics_body *player_body) {
+  entity *entity = entities_get_entity(ai_body->entity_id);
   if (CheckCollisionRecs(ai_body->aabb, player_body->aabb)) {
-    entity *entity = entities_get_entity(ai_body->entity_id);
     ai_body->is_active = false;
     entity->is_active = false;
   }
+
   float distance = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ player_body->aabb.x, player_body->aabb.y});
-  Vector2 seek   = normalize_vector2(seek_vector2((Vector2){ai_body->aabb.x,     ai_body->aabb.y},
-                                                  (Vector2){player_body->aabb.x, player_body->aabb.y}));
+  bool is_far_away_from_player = (distance / TILE_SIZE) > 7.0f;  // TODO: move number to config
 
-  bool is_standing_still       = ai_body->direction.x == 0.0f && ai_body->direction.y == 0.0f;
-  bool is_close_to_player      = ((distance / TILE_SIZE) < 5.0f) || ((distance / TILE_SIZE)< 5.0f);  // TODO: move number to config
-  bool is_far_away_from_player = ((distance / TILE_SIZE) > 10.0f) && ((distance / TILE_SIZE) > 10.0f);  // TODO: move number to config
+  if (!is_far_away_from_player) {
+    // Entity is within casing distance of player
+    entity->color = GREEN;
+    if (entity->waypoints == NULL) {
+      // Entity does not have any waypoints
+      IntVector2 origin = intvec2_from_vec2((Vector2){ ai_body->aabb.x / TILE_SIZE, ai_body->aabb.y / TILE_SIZE });
+      IntVector2 goal = intvec2_from_vec2((Vector2){ player_body->aabb.x / TILE_SIZE, player_body->aabb.y / TILE_SIZE });
+      entity->waypoints = astar_search(&origin, &goal);
+      entity->current_waypoint_index = 0;
+    } else {
+      // Entity does have waypoints
+      if (entity->current_waypoint_index >= entity->waypoints->length) {
+        // Entity has reached the end of its waypoints
+        free_reconstructed_path(entity->waypoints);
+        entity->waypoints = NULL;
+        entity->current_waypoint_index = 0;
+      } else {
+        // Entity is still within the waypoints
+        Vector2 *waypoint = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                // Tile Waypoint e.g. x:25, y:5
+        Vector2 coords = { waypoint->x * TILE_SIZE, waypoint->y * TILE_SIZE };                                                // Waypoint in coords, e.g. x:400, y:80
+        distance = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ coords.x, coords.y });        // Distance between player and waypoint
+        bool is_within_waypoint_threshhold = (distance / TILE_SIZE) < 3.0f;                                                   // TODO: move number to config
 
-  // if not moving and distance is small start seeking
-  if (is_standing_still) {
-    if (is_close_to_player) { ai_body->direction = seek; }
+        // TODO: resolve the problem with diagonal and the below should work, and maybe remove "shaking behavior"
+        /* Vector2 normalized_waypoint = normalize_vector2((Vector2){ coords.x - ai_body->aabb.x, coords.y - ai_body->aabb.y }); */ 
+        Vector2 normalized_waypoint = normalize_vector2((Vector2){ coords.x > ai_body->aabb.x ? 1 : -1, coords.y > ai_body->aabb.y ? 1 : -1, }); 
+
+        ai_body->direction = normalized_waypoint;                                                                             // Set player direction
+        if (is_within_waypoint_threshhold) {
+          // Entity is close to the current waypoint
+          entity->current_waypoint_index++; // Move to next waypoint
+        }
+      }
+    }
   } else {
-    if (is_far_away_from_player) { ai_body->direction = (Vector2) {0.0f, 0.0f}; } 
-    else                         { ai_body->direction = seek; }
+    // Entity is out of chasing distance of player
+    entity->color = RED;
+    ai_body->direction = (Vector2) {0.0f, 0.0f}; 
+    if (entity->waypoints != NULL) {
+      // Entity has waypoints, clear them
+      free_reconstructed_path(entity->waypoints);
+      entity->waypoints = NULL;
+      entity->current_waypoint_index = 0;
+    }
   }
 }
 
-bool show_player_debug_body = false;
-void draw_player_debug_body(physics_body *body) {
+bool show_debug_body = false;
+void draw_debug_body(physics_body *body) {
   int column_size = 80;
   int column_height = 70;
   const char *velocity = TextFormat(
@@ -98,7 +133,6 @@ void draw_player_debug_body(physics_body *body) {
   DrawText(direction,     column_size  *  3 + 10,10,  10,  RED);
 }
 
-
 //----------------------------------------------------------------------------- 
 // MAIN
 //----------------------------------------------------------------------------- 
@@ -113,6 +147,14 @@ int main(void)
 
   Texture tileset   = LoadTexture("resources/tiles-16.png");
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
+  int **collision_mask = malloc(sizeof(int) * level.height);
+  for (int y = 0; y < level.height; y++) {
+    collision_mask[y] = malloc(sizeof(int) * level.width);
+    for (int x = 0; x < level.width; x++) {
+      collision_mask[y][x] = level.tile_defs[level.tilemap[y][x]].is_walkable;
+    }
+  }
+  astar_allocate(level.width, level.height, collision_mask);
 
   for (size_t i = 0; i < ENEMIES_COUNT; i++) {
     entities_add_entity( RED,
@@ -181,10 +223,10 @@ int main(void)
 
     // Player debug
     if (IsKeyPressed(KEY_P)){
-      show_player_debug_body = !show_player_debug_body;
+      show_debug_body = !show_debug_body;
     }
-    if (show_player_debug_body) {
-      draw_player_debug_body(player_body);
+    if (show_debug_body) {
+      draw_debug_body(player_body);
     }
 
     BeginMode2D(camera);
@@ -205,6 +247,7 @@ int main(void)
 
   entities_deinit();
   physics_deinit();
+  astar_free();
   unload_level(&level);
   CloseWindow();
 

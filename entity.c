@@ -43,6 +43,8 @@ size_t entities_add_entity(Color color,Rectangle aabb, Vector2 direction,Vector2
   entity new_entity = {
     .color    = color,
     .body_id  = body_id,
+    .waypoints = NULL,
+    .current_waypoint_index = 0,
     .is_active = true
   };
 

@@ -4,8 +4,10 @@
 #include "physics.h"
 
 typedef struct {
-  Color color; // TODO: remove when replaced by sprite
-  size_t body_id;
+  Color color;                   // TODO: remove when replaced by sprite
+  size_t body_id;                // Reference to a physics body
+  dynlist *waypoints;            // List of vectors
+  size_t current_waypoint_index; // current index in waypoints
   bool is_active;
 } entity;
 

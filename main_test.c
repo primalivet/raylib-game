@@ -23,11 +23,14 @@ int test_astar_search() {
     }
   }
 
-  Rectangle origin =  (Rectangle){ 3 * TILE_SIZE, 3 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
-  Rectangle goal = (Rectangle){ 15 * TILE_SIZE , 15 * TILE_SIZE, TILE_SIZE, TILE_SIZE };
+  Rectangle player = {  250.000092, 64.000000, TILE_SIZE, TILE_SIZE };
+  Rectangle enemy = { 400.000000, 80.000000,  TILE_SIZE, TILE_SIZE };
+
+  IntVector2 goal = intvec2_from_vec2((Vector2){ player.x / TILE_SIZE, player.y / TILE_SIZE });
+  IntVector2 origin = intvec2_from_vec2((Vector2){ enemy.x / TILE_SIZE, enemy.y / TILE_SIZE });
+
   astar_allocate(level.width, level.height, collision_mask);
-  dynlist *path = astar_search(&(Vector2){ origin.x / TILE_SIZE, origin.y / TILE_SIZE },
-                               &(Vector2){ goal.x / TILE_SIZE, goal.y / TILE_SIZE });
+  dynlist *path = astar_search( &origin, &goal);
 
   if (!path) {
     printf("PATH NOT FOUND\n");
@@ -45,12 +48,12 @@ int test_astar_search() {
       }
     }
     for (size_t i = 0; i < path->length; i++) {
-      astar_node *step = dynlist_get_at(path, i);
+      Vector2 *step = dynlist_get_at(path, i);
       DrawRectangle(step->x * TILE_SIZE, step->y * TILE_SIZE, TILE_SIZE, TILE_SIZE, BLACK);
     }
 
-    DrawRectangleRec(origin, RED);
-    DrawRectangleRec(goal, GREEN);
+    DrawRectangleRec(player, GREEN);
+    DrawRectangleRec(enemy, RED);
 
     ClearBackground(RAYWHITE);
     EndDrawing();
@@ -61,8 +64,8 @@ int test_astar_search() {
   if(path) {
     printf("Path length: %lu\n", path->length);
     for (size_t i = 0; i < path->length; i++) {
-      astar_node *step = dynlist_get_at(path, i);
-      printf("x: %f, y: %f (f_cost: %f, g_cost: %f, h_cost: %f)\n", step->x, step->y, step->f_cost, step->g_cost, step->h_cost);
+      Vector2 *step = dynlist_get_at(path, i);
+      printf("x: %f, y: %f\n", step->x, step->y);
     }
   } else {
     printf("Path not found\n");

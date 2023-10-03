@@ -28,7 +28,7 @@ int astar_compare_nodes(const void *a, const void *b) {
   astar_node *node_a = item_a->data;
   astar_node *node_b = item_b->data;
 
-  printf("Comparing node a (x: %f, y: %f, f_cost: %f) and node b (x: %f, y: %f, f_cost: %f)\n", node_a->x, node_a->y, node_a->f_cost, node_b->x, node_b->y, node_b->f_cost);
+  /* printf("Comparing node a (x: %d, y: %d, f_cost: %f) and node b (x: %d, y: %d, f_cost: %f)\n", node_a->x, node_a->y, node_a->f_cost, node_b->x, node_b->y, node_b->f_cost); */
 
   // Compare by Full cost
   if (node_a->f_cost < node_b->f_cost) return -1;
@@ -48,11 +48,11 @@ void astar_allocate(int width, int height, int **collision_mask) {
 }
 
 dynlist *reconstruct_path(astar_node *goal_node) {
-  dynlist *path = dynlist_allocate(sizeof(astar_node), 0);
+  dynlist *path = dynlist_allocate(sizeof(Vector2), 0);
   astar_node *current = goal_node;
 
   while (current != NULL) {
-    dynlist_prepend(path, current);
+    dynlist_prepend(path, &(Vector2){ current->x, current->y });
     current = current->parent;
   }
 
@@ -73,7 +73,6 @@ bool is_valid_position(Vector2 position) {
                           position.y <= state.height;
   if (is_within_bounds) {
     bool is_walkable = state.collision_mask[y][x];
-    printf("Is walkable: (x: %d, y: %d) = %d\n", x, y, is_walkable ? 1 : 0);
     return is_walkable;
   } else {
     return false;
@@ -98,12 +97,12 @@ void print_iteration(bool pre_generation, astar_node *q, prio_queue *open_set, p
   } else {
     printf("AFTER neighbour generation \n");
   }
-  printf("Enequeud node:      (x: %f, y: %f) hcost: %f, gcost: %f, fcost: %f\n", q->x, q->y, q->h_cost, q->g_cost, q->f_cost);
+  printf("Enequeud node:      (x: %d, y: %d) hcost: %f, gcost: %f, fcost: %f\n", q->x, q->y, q->h_cost, q->g_cost, q->f_cost);
   printf("Open nodes (%lu)\n", open_set->length);
   if (open_set->length > 0) {
     for (size_t i = 0; i < open_set->length; i++) {
       astar_node *current = open_set->items[i].data;
-      printf("Open     :  (x: %f, y: %f) hcost: %f, gcost: %f, fcost: %f. \n", current->x, current->y, current->h_cost, current->g_cost, current->f_cost);
+      printf("Open     :  (x: %d, y: %d) hcost: %f, gcost: %f, fcost: %f. \n", current->x, current->y, current->h_cost, current->g_cost, current->f_cost);
     }
   } else {
     printf("EMPTY");
@@ -113,7 +112,7 @@ void print_iteration(bool pre_generation, astar_node *q, prio_queue *open_set, p
   if (closed_set->length > 0) {
     for (size_t i = 0; i < closed_set->length; i++) {
       astar_node *current = closed_set->items[i].data;
-      printf("Closed   :  (x: %f, y: %f) hcost: %f, gcost: %f, fcost: %f. \n", current->x, current->y, current->h_cost, current->g_cost, current->f_cost);
+      printf("Closed   :  (x: %d, y: %d) hcost: %f, gcost: %f, fcost: %f. \n", current->x, current->y, current->h_cost, current->g_cost, current->f_cost);
     }
   } else {
     printf("EMPTY");
@@ -121,7 +120,7 @@ void print_iteration(bool pre_generation, astar_node *q, prio_queue *open_set, p
   printf("\n\n");
 }
 
-dynlist *astar_search(Vector2 *origin, Vector2 *goal)
+dynlist *astar_search(IntVector2 *origin, IntVector2 *goal)
 {
   prio_queue *open_set   = queue_allocate(10, 0.5f, astar_compare_nodes);
   prio_queue *closed_set = queue_allocate(10, 0.5f, astar_compare_nodes);
@@ -163,11 +162,10 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
     prio_item *q_item = queue_dequeue(open_set);
     astar_node *q = q_item->data;
 
-    printf("ITERATION %d\n", iteration);
-    print_iteration(true, q, open_set, closed_set);
+    /* printf("ITERATION %d\n", iteration); */
+    /* print_iteration(true, q, open_set, closed_set); */
 
     if (q->x == goal_node->x && q->y == goal_node->y) {
-      printf("Found Goal. Position (x: %g, y: %f)\n", q->x, q->y);
       return reconstruct_path(q);
     }
 
@@ -184,21 +182,30 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
     cardinal_positions[6] = (Vector2){ q->x,     q->y + 1}; // South
     cardinal_positions[7] = (Vector2){ q->x + 1, q->y + 1}; // South East
 
+    bool valid_cardinal_positions[8];
+    valid_cardinal_positions[1] = is_valid_position(cardinal_positions[1]); // North
+    valid_cardinal_positions[3] = is_valid_position(cardinal_positions[3]); // West
+    valid_cardinal_positions[4] = is_valid_position(cardinal_positions[4]); // East
+    valid_cardinal_positions[6] = is_valid_position(cardinal_positions[6]); // South
+
+    valid_cardinal_positions[0] = is_valid_position(cardinal_positions[0]) && valid_cardinal_positions[1] && valid_cardinal_positions[3]; // North West (and North and West)
+    valid_cardinal_positions[2] = is_valid_position(cardinal_positions[2]) && valid_cardinal_positions[1] && valid_cardinal_positions[4]; // North East (and North and East)
+    valid_cardinal_positions[5] = is_valid_position(cardinal_positions[5]) && valid_cardinal_positions[6] && valid_cardinal_positions[3]; // South West (and South and West)
+    valid_cardinal_positions[7] = is_valid_position(cardinal_positions[7]) && valid_cardinal_positions[6] && valid_cardinal_positions[4]; // South East (and South and East)
+
     astar_node **neighbours = malloc(8 * sizeof(astar_node *));
     if (!neighbours) { printf("Failed to allocate neighbours\n"); exit(1); }
 
     /* printf("Current:    (x: %f, y: %f) hcost: %f, gcost: %f, fcost: %f\n", q->x, q->y, q->h_cost, q->g_cost, q->f_cost); */
     // Generate neighbours from cardinal positions
-    printf("GENERATING NODES\n");
     int neighbours_count = 0;
     for (int i = 0; i < 8; i++) {
       int existing_closed_node_index = get_queued_node_by_pos(closed_set, cardinal_positions[i]);
       if (existing_closed_node_index != -1) {
-        astar_node *existing_node = closed_set->items[existing_closed_node_index].data;
-        printf("Existing:   (x: %f, y: %f).  Continue loop\n", existing_node->x, existing_node->y);
+        /* astar_node *existing_node = closed_set->items[existing_closed_node_index].data; */
         continue;
       }
-      if (is_valid_position(cardinal_positions[i])) {
+      if (valid_cardinal_positions[i]) {
         astar_node *neighbour = malloc(sizeof(astar_node));
         if (!neighbour) { printf("Failed to allocate neighbour\n"); exit(1); }
         /* Vector2 q_pos         = (Vector2){ q->x, q->y }; */
@@ -230,7 +237,6 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
 
         // Base case / We found the goal, stop searching
         if (neighbour->x == goal_node->x && neighbour->y == goal_node->y) {
-          printf("Found goal. Neighbour is goal node.\n");
           return reconstruct_path(neighbour);
         }
 
@@ -251,23 +257,23 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
         p_item->priority = -neighbour->f_cost;
         p_item->data     = neighbour;
 
-        printf("Neighbour:  (x: %f, y: %f) hcost: %f, gcost: %f, fcost: %f. ", neighbour->x, neighbour->y, neighbour->h_cost, neighbour->g_cost, neighbour->f_cost);
+        /* printf("Neighbour:  (x: %d, y: %d) hcost: %f, gcost: %f, fcost: %f. ", neighbour->x, neighbour->y, neighbour->h_cost, neighbour->g_cost, neighbour->f_cost); */
 
         switch(handle_node) {
           case ADD_TO_OPEN: { 
-            printf("Action: ADD_TO_OPEN\n");
+            /* printf("Action: ADD_TO_OPEN\n"); */
             queue_enqueue(open_set, p_item);
           } break; 
           case ADD_TO_CLOSED: { 
-            printf("Action: ADD_TO_CLOSED\n");
+            /* printf("Action: ADD_TO_CLOSED\n"); */
             queue_enqueue(closed_set, p_item); 
           } break; 
           case REPLACE_IN_OPEN: { 
-            printf("Action: REPLACE_IN_OPEN\n"); 
+            /* printf("Action: REPLACE_IN_OPEN\n"); */ 
             queue_replace_at(open_set, existing_open_node_index, p_item); 
           } break;
           case SKIP: { 
-            printf("Action: SKIP\n"); 
+            /* printf("Action: SKIP\n"); */ 
             if (p_item != NULL) {
               free(p_item); 
               p_item = NULL;
@@ -280,7 +286,7 @@ dynlist *astar_search(Vector2 *origin, Vector2 *goal)
         }
       } 
     }
-    print_iteration(false, q, open_set, closed_set);
+    /* print_iteration(false, q, open_set, closed_set); */
     iteration++;
 
     // Free neighbours array

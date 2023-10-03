@@ -1,6 +1,14 @@
 #include <math.h>
 #include <raylib.h>
+#include "vector2.h"
 
+IntVector2 intvec2_from_vec2(Vector2 vec) {
+  return (IntVector2) { (int)vec.x, (int)vec.y };
+}
+
+Vector2 vec2_from_rect(Rectangle rect) {
+  return (Vector2) { rect.x, rect.y };
+}
 
 Vector2 normalize_vector2(Vector2 v) {
   float length = sqrt(v.x * v.x + v.y * v.y);

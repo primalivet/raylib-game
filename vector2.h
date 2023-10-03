@@ -2,6 +2,13 @@
 #define VECTOR2_H
 #include <raylib.h>
 
+typedef struct {
+  int x;
+  int y;
+} IntVector2;
+
+IntVector2 intvec2_from_vec2(Vector2 vec);
+Vector2 vec2_from_rect(Rectangle rect);
 Vector2 clamp_vector2(Vector2 position, Rectangle boundary);
 float magnitude_vector2(Vector2 v);
 Vector2 add_vector2(Vector2 a, Vector2 b);
