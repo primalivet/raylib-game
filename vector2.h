@@ -11,6 +11,7 @@ IntVector2 intvec2_from_vec2(Vector2 vec);
 Vector2 vec2_from_rect(Rectangle rect);
 Vector2 clamp_vector2(Vector2 position, Rectangle boundary);
 float magnitude_vector2(Vector2 v);
+Vector2 sub_vector2(Vector2 a, Vector2 b);
 Vector2 add_vector2(Vector2 a, Vector2 b);
 Vector2 add_x_vector2(Vector2 a, Vector2 b);
 Vector2 add_y_vector2(Vector2 a, Vector2 b); 

@@ -37,6 +37,14 @@ Vector2 add_vector2(Vector2 a, Vector2 b)
   return sum;
 }
 
+Vector2 sub_vector2(Vector2 a, Vector2 b) 
+{
+  Vector2 sum = a;
+  sum.x -= b.x;
+  sum.y -= b.y;
+  return sum;
+}
+
 Vector2 add_x_vector2(Vector2 a, Vector2 b) 
 {
   Vector2 sum = a;
