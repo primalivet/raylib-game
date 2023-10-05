@@ -29,21 +29,6 @@
 #include "entity.h"
 #include "a_star.h"
 
-Vector2 from_world_to_grid(Vector2 position, float tile_size) {
-  return (Vector2){
-    (position.x - (tile_size / 2.0f)),
-    (position.y - (tile_size / 2.0f))
-  };
-}
-
-Vector2 from_grid_to_world_approx(Vector2 position, float tile_size) {
-  return (Vector2){
-    ((position.x * tile_size) + (tile_size / 2.0f)),
-    ((position.y * tile_size) + (tile_size / 2.0f))
-  };
-}
-
-
 void read_input(physics_body *player_body) {
   // Reset player direction
   player_body->direction.x = 0.0f;
@@ -59,7 +44,35 @@ void read_input(physics_body *player_body) {
   player_body->direction = normalize_vector2(player_body->direction);
 }
 
-void update_ai_body(physics_body *body, physics_body *player_body) {
+// tile_def get_tiledef_at_position(const Vector2 position, const level *level) {
+//   Vector2 tile_position = (Vector2){position.x / TILE_SIZE, position.y / TILE_SIZE};
+//   IntVector2 tile_position_int = intvec2_from_vec2(tile_position);
+//   if ((tile_position_int.x < 0 || tile_position_int.x > level->width) || 
+//       (tile_position_int.y < 0 || tile_position_int.y > level->height)) {
+//     printf("Out of bounds when accessing tilemap at %d, %d\n", tile_position_int.x, tile_position_int.y);
+//     exit(1);
+//   }
+//   int tile_number = level->tilemap[tile_position_int.y][tile_position_int.x];
+//   tile_def tile_def = level->tile_defs[tile_number];
+//   return tile_def;
+// }
+
+// bool has_line_of_sight(Vector2 origin, Vector2 goal, const level *level) {
+//   Vector2 direction = normalize_vector2(sub_vector2(goal, origin));
+//   Vector2 current_position = origin;
+// 
+//   while(euclidean_distance(current_position, goal) > 2.0f) {
+//     current_position = add_vector2(current_position, direction);
+//     tile_def tile_def = get_tiledef_at_position(current_position, level);
+//     if (!tile_def.is_walkable) {
+//       return false;
+//     } 
+//   }
+//   return true;
+// }
+
+#pragma  GCC diagnostic ignored "-Wunused-parameter"
+void update_ai_body(physics_body *body, physics_body *player_body, level *level) {
   entity *entity = entities_get_entity(body->entity_id);
   if (CheckCollisionRecs(body->aabb, player_body->aabb)) {
     body->is_active = false;
@@ -81,11 +94,24 @@ void update_ai_body(physics_body *body, physics_body *player_body) {
   } 
 
   if (follow_waypoints) {
+    // TODO: smoothen path using has_line_of_sight
+    // if (entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length - 1) {
+    //   IntVector2 *waypoint    = dynlist_get_at(entity->waypoints, entity->current_waypoint_index + 1);
+    //   Vector2 waypoint_coords = from_grid_to_world_approx((Vector2){ waypoint->x, waypoint->y }, TILE_SIZE);
+    //   bool can_see            = has_line_of_sight(body->position, waypoint_coords, level);
+    //   while (can_see) {
+    //     entity->color = GREEN;
+    //     entity->current_waypoint_index++;
+    //     waypoint          = dynlist_get_at(entity->waypoints, entity->current_waypoint_index + 1);
+    //     can_see = has_line_of_sight(body->position, waypoint_coords, level);
+    //   }
+    // }
+
     Vector2 *waypoint                  = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                     // Tile Waypoint e.g. x:25, y:5
     Vector2 coords                     = { (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.width/2.0f),
                                            (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.height/2.0f) };                           // Waypoint in coords, e.g. x:400, y:80
     float coords_distance              = euclidean_distance((Vector2){ body->position.x, body->position.y }, (Vector2){ coords.x, coords.y });  // Distance between player and waypoint
-    bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 2.0f;                                                                  // TODO: move number to config
+    bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 2.5f;                                                                  // TODO: move number to config
     Vector2 normalized_waypoint        = normalize_vector2((Vector2){ coords.x - body->position.x, coords.y - body->position.y }); 
     body->direction                    = normalized_waypoint;                                                                                   // Set player direction
 
@@ -200,7 +226,7 @@ int main(void)
       if (i == player_id) continue;
       entity *ai_entity = entities_get_entity(i);
       physics_body *ai_body = physics_get_body(ai_entity->body_id);
-      update_ai_body(ai_body, player_body);
+      update_ai_body(ai_body, player_body, &level);
     }
 
     // respawn inactive AI entities
@@ -216,7 +242,7 @@ int main(void)
                           (Vector2){0.0f, 0.0f},
                           1.0f,
                           0.35f,
-                          2.0f,
+                          1.0f,
                           false);
     }
 
@@ -267,6 +293,7 @@ int main(void)
   physics_deinit();
   astar_free();
   unload_level(&level);
+  UnloadTexture(tileset);
   CloseWindow();
 
   return 0;
