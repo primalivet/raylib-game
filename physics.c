@@ -151,20 +151,6 @@ void physics_update(level *level)
     Rectangle proposed_aabb_y  = body->aabb;               // Copy of current AABB
     proposed_aabb_y.y         += proposed_velocity_y;      // Apply proposed velocity to AABB
 
-
-    if (!body->is_kinematic) {
-      entity *entity = entities_get_entity(body->entity_id);
-      if (physics_intersect_tilemap(&proposed_aabb_x , level) && physics_intersect_tilemap(&proposed_aabb_y , level)) {
-        entity->color = DARKPURPLE;
-      } else if (physics_intersect_tilemap(&proposed_aabb_x , level)) {
-        entity->color = DARKBROWN;
-      } else if (physics_intersect_tilemap(&proposed_aabb_y, level)) {
-        entity->color = DARKBLUE;
-      } else {
-        entity->color = RED; // default
-      }
-    }
-
     if (physics_intersect_tilemap(&proposed_aabb_x , level)) {
       if (body->is_kinematic) {
         // TODO: add proper tilemap collision response for x axis
