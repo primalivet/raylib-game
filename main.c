@@ -49,56 +49,40 @@ void update_ai_body(physics_body *ai_body, physics_body *player_body) {
   entity *entity = entities_get_entity(ai_body->entity_id);
   if (CheckCollisionRecs(ai_body->aabb, player_body->aabb)) {
     ai_body->is_active = false;
-    entity->is_active = false;
+    entity->is_active  = false;
   }
 
-  float distance = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ player_body->aabb.x, player_body->aabb.y});
-  bool is_far_away_from_player = (distance / TILE_SIZE) > 7.0f;  // TODO: move number to config
+  float player_distance        = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ player_body->aabb.x, player_body->aabb.y});
+  bool is_far_away_from_player = (player_distance / TILE_SIZE) > 7.0f;  // TODO: move number to config
+  bool generate_waypoints      = !is_far_away_from_player && entity->waypoints == NULL;
+  bool follow_waypoints        = entity->waypoints                             != NULL && entity->current_waypoint_index < entity->waypoints->length;
+  bool clear_waypoints         = entity->waypoints                             != NULL && entity->current_waypoint_index >= entity->waypoints->length;
 
-  if (!is_far_away_from_player) {
-    // Entity is within casing distance of player
-    entity->color = GREEN;
-    if (entity->waypoints == NULL) {
-      // Entity does not have any waypoints
-      IntVector2 origin = intvec2_from_vec2((Vector2){ ai_body->aabb.x / TILE_SIZE, ai_body->aabb.y / TILE_SIZE });
-      IntVector2 goal = intvec2_from_vec2((Vector2){ player_body->aabb.x / TILE_SIZE, player_body->aabb.y / TILE_SIZE });
-      entity->waypoints = astar_search(&origin, &goal);
-      entity->current_waypoint_index = 0;
-    } else {
-      // Entity does have waypoints
-      if (entity->current_waypoint_index >= entity->waypoints->length) {
-        // Entity has reached the end of its waypoints
-        free_reconstructed_path(entity->waypoints);
-        entity->waypoints = NULL;
-        entity->current_waypoint_index = 0;
-      } else {
-        // Entity is still within the waypoints
-        Vector2 *waypoint = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                // Tile Waypoint e.g. x:25, y:5
-        Vector2 coords = { waypoint->x * TILE_SIZE, waypoint->y * TILE_SIZE };                                                // Waypoint in coords, e.g. x:400, y:80
-        distance = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ coords.x, coords.y });        // Distance between player and waypoint
-        bool is_within_waypoint_threshhold = (distance / TILE_SIZE) < 3.0f;                                                   // TODO: move number to config
+  if (generate_waypoints) {
+    IntVector2 origin              = intvec2_from_vec2((Vector2){ ai_body->aabb.x / TILE_SIZE, ai_body->aabb.y / TILE_SIZE });
+    IntVector2 goal                = intvec2_from_vec2((Vector2){ player_body->aabb.x / TILE_SIZE, player_body->aabb.y / TILE_SIZE });
+    entity->waypoints              = astar_search(&origin, &goal);
+    entity->current_waypoint_index = 0;
+  } 
 
-        // TODO: resolve the problem with diagonal and the below should work, and maybe remove "shaking behavior"
-        /* Vector2 normalized_waypoint = normalize_vector2((Vector2){ coords.x - ai_body->aabb.x, coords.y - ai_body->aabb.y }); */ 
-        Vector2 normalized_waypoint = normalize_vector2((Vector2){ coords.x > ai_body->aabb.x ? 1 : -1, coords.y > ai_body->aabb.y ? 1 : -1, }); 
-
-        ai_body->direction = normalized_waypoint;                                                                             // Set player direction
-        if (is_within_waypoint_threshhold) {
-          // Entity is close to the current waypoint
-          entity->current_waypoint_index++; // Move to next waypoint
-        }
-      }
+  if (follow_waypoints) {
+    Vector2 *waypoint                  = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                  // Tile Waypoint e.g. x:25, y:5
+    Vector2 coords                     = { (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f - ai_body->aabb.width/2.0f),
+                                           (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - ai_body->aabb.height/2.0f) };                                               // Waypoint in coords, e.g. x:400, y:80
+    float coords_distance              = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ coords.x, coords.y }); // Distance between player and waypoint
+    bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 3.0f;                                                                      // TODO: move number to config
+    Vector2 normalized_waypoint        = normalize_vector2((Vector2){ coords.x - ai_body->aabb.x, coords.y - ai_body->aabb.y }); 
+    ai_body->direction                 = normalized_waypoint;                                                                                // Set player direction
+    
+    if (is_within_waypoint_threshhold) {
+      entity->current_waypoint_index++; // Move to next waypoint
     }
-  } else {
-    // Entity is out of chasing distance of player
-    entity->color = RED;
-    ai_body->direction = (Vector2) {0.0f, 0.0f}; 
-    if (entity->waypoints != NULL) {
-      // Entity has waypoints, clear them
-      free_reconstructed_path(entity->waypoints);
-      entity->waypoints = NULL;
-      entity->current_waypoint_index = 0;
-    }
+  } 
+
+  if (clear_waypoints) {
+    free_reconstructed_path(entity->waypoints);
+    entity->waypoints              = NULL;
+    entity->current_waypoint_index = 0;
   }
 }
 
@@ -238,6 +222,10 @@ int main(void)
       entity *entity = entities_get_entity(i);
       if (!entity->is_active) continue;
       physics_body *entity_body = physics_get_body(entity->body_id);
+      if (entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length) {
+        Vector2 *waypoint = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);
+        DrawLine(entity_body->aabb.x , entity_body->aabb.y , waypoint->x * TILE_SIZE, waypoint->y * TILE_SIZE, entity->color);
+      }
       DrawRectangleRec(entity_body->aabb, entity->color);
     }
 
