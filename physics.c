@@ -141,14 +141,26 @@ void physics_update(level *level)
     proposed_aabb_y.y         += proposed_velocity_y;      // Apply proposed velocity to AABB
 
 
+    if (!body->is_kinematic) {
+      entity *entity = entities_get_entity(body->entity_id);
+      if (physics_intersect_tilemap(&proposed_aabb_x , level) && physics_intersect_tilemap(&proposed_aabb_y , level)) {
+        entity->color = DARKPURPLE;
+      } else if (physics_intersect_tilemap(&proposed_aabb_x , level)) {
+        entity->color = DARKBROWN;
+      } else if (physics_intersect_tilemap(&proposed_aabb_y, level)) {
+        entity->color = DARKBLUE;
+      } else {
+        entity->color = RED; // default
+      }
+    }
+
     if (physics_intersect_tilemap(&proposed_aabb_x , level)) {
       if (body->is_kinematic) {
         // TODO: add proper tilemap collision response for x axis
         float response_velocity_x = fabs(proposed_velocity_x) >= body->max_speed ? body->velocity.x * -1.0f : 0.0f;
         body->velocity.x = response_velocity_x;
       } else {
-        body->velocity.x *= -1;
-        body->direction.x *= -1;
+        body->velocity.x = 0;
       }
     } else {
       body->velocity.x = proposed_velocity_x;
@@ -160,8 +172,7 @@ void physics_update(level *level)
         float response_velocity_y = fabs(proposed_velocity_y) >= body->max_speed ? body->velocity.y * -1.0f : 0.0f;
         body->velocity.y = response_velocity_y;
       } else {
-        body->velocity.y *= -1;
-        body->direction.y *= -1;
+        body->velocity.y = 0;
       }
     } else {
       body->velocity.y = proposed_velocity_y;
