@@ -36,7 +36,7 @@ Vector2 from_world_to_grid(Vector2 position, float tile_size) {
   };
 }
 
-Vector2 from_frid_to_world(Vector2 position, float tile_size) {
+Vector2 from_grid_to_world_approx(Vector2 position, float tile_size) {
   return (Vector2){
     ((position.x * tile_size) + (tile_size / 2.0f)),
     ((position.y * tile_size) + (tile_size / 2.0f))
@@ -68,9 +68,10 @@ void update_ai_body(physics_body *body, physics_body *player_body) {
 
   float player_distance        = euclidean_distance(body->position, player_body->position);
   bool is_far_away_from_player = (player_distance / TILE_SIZE) > 7.0f;  // TODO: move number to config
+  bool is_next_to_player       = (player_distance / TILE_SIZE) < 2.0f;
   bool generate_waypoints      = !is_far_away_from_player && entity->waypoints == NULL;
-  bool follow_waypoints        = entity->waypoints                             != NULL && entity->current_waypoint_index < entity->waypoints->length;
-  bool clear_waypoints         = entity->waypoints                             != NULL && entity->current_waypoint_index >= entity->waypoints->length;
+  bool follow_waypoints        = entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length;
+  bool clear_waypoints         = is_next_to_player || (entity->waypoints != NULL && entity->current_waypoint_index >= entity->waypoints->length);
 
   if (generate_waypoints) {
     IntVector2 origin              = intvec2_from_vec2((Vector2){ body->position.x / TILE_SIZE, body->position.y / TILE_SIZE });
@@ -80,20 +81,21 @@ void update_ai_body(physics_body *body, physics_body *player_body) {
   } 
 
   if (follow_waypoints) {
-    Vector2 *waypoint                  = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                  // Tile Waypoint e.g. x:25, y:5
+    Vector2 *waypoint                  = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                     // Tile Waypoint e.g. x:25, y:5
     Vector2 coords                     = { (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.width/2.0f),
-                                           (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.height/2.0f) };                                               // Waypoint in coords, e.g. x:400, y:80
-    float coords_distance              = euclidean_distance((Vector2){ body->position.x, body->position.y }, (Vector2){ coords.x, coords.y }); // Distance between player and waypoint
-    bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 3.0f;                                                                      // TODO: move number to config
+                                           (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.height/2.0f) };                           // Waypoint in coords, e.g. x:400, y:80
+    float coords_distance              = euclidean_distance((Vector2){ body->position.x, body->position.y }, (Vector2){ coords.x, coords.y });  // Distance between player and waypoint
+    bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 2.0f;                                                                  // TODO: move number to config
     Vector2 normalized_waypoint        = normalize_vector2((Vector2){ coords.x - body->position.x, coords.y - body->position.y }); 
-    body->direction                 = normalized_waypoint;                                                                                // Set player direction
-    
+    body->direction                    = normalized_waypoint;                                                                                   // Set player direction
+
     if (is_within_waypoint_threshhold) {
       entity->current_waypoint_index++; // Move to next waypoint
     }
   } 
 
   if (clear_waypoints) {
+    body->direction = (Vector2){ 0.0f, 0.0f };
     free_reconstructed_path(entity->waypoints);
     entity->waypoints              = NULL;
     entity->current_waypoint_index = 0;
@@ -242,10 +244,18 @@ int main(void)
       entity *entity = entities_get_entity(i);
       if (!entity->is_active) continue;
       physics_body *entity_body = physics_get_body(entity->body_id);
+
       if (entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length) {
         Vector2 *waypoint = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);
-        DrawLine(entity_body->aabb.x , entity_body->aabb.y , waypoint->x * TILE_SIZE, waypoint->y * TILE_SIZE, entity->color);
+        Vector2 coords    = (Vector2){ (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f ), (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f ) };                           // Waypoint in coords, e.g. x:400, y:80
+        DrawLineEx(entity_body->position, coords, 2.0f, entity->color);
+        Vector2 textPos = (Vector2) {
+          entity_body->position.x - 20,
+          entity_body->position.y - entity_body->aabb.height * 2
+        };
+        DrawText(TextFormat("Waypoint i: %d (x: %f, %f)", entity->current_waypoint_index, coords.x, coords.y), textPos.x, textPos.y, 10, entity->color);
       }
+
       DrawRectangleRec(entity_body->aabb, entity->color);
     }
 
