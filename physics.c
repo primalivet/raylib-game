@@ -31,6 +31,7 @@ static physics_body physics_create_default_body()
   // These bogus values are just to initialize all field. They should be set
   // explicily on the return value from this function
   physics_body body = (physics_body) {
+    .position      = {0.0f, 0.0f},
     .aabb          = {0.0f, 0.0f, 0.0f, 0.0f},
     .direction     = {0.0f, 0.0f},
     .velocity      = {0.0f, 0.0f},
@@ -44,7 +45,17 @@ static physics_body physics_create_default_body()
   return body;
 }
 
-size_t physics_add_body(Rectangle aabb, Vector2 direction, Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed,  bool is_kinematic, size_t entity_id)
+Rectangle physics_get_aabb(const physics_body *body)
+{
+  return (Rectangle){
+    body->position.x - (body->aabb.width / 2.0f),
+    body->position.y - (body->aabb.height / 2.0f),
+    body->aabb.width,
+    body->aabb.height,
+  };
+}
+
+size_t physics_add_body(Vector2 position, float width, float height, Vector2 direction, Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed,  bool is_kinematic, size_t entity_id)
 {
   size_t id = state.bodies->length;
 
@@ -58,16 +69,17 @@ size_t physics_add_body(Rectangle aabb, Vector2 direction, Vector2 velocity, Vec
     }
   }
   physics_body new_body = physics_create_default_body();
-  new_body.aabb         = aabb;
-  new_body.direction    = direction;
-  new_body.velocity     = velocity;
-  new_body.acceleration = acceleration;
+  new_body.position            = position;
+  new_body.aabb                = (Rectangle){ position.x - (width / 2.0f), position.y - (height / 2.0f), width, height };
+  new_body.direction           = direction;
+  new_body.velocity            = velocity;
+  new_body.acceleration        = acceleration;
   new_body.acceleration_factor = acceleration_factor;
-  new_body.friction     = friction;
-  new_body.max_speed    = max_speed;
-  new_body.is_kinematic = is_kinematic;
-  new_body.is_active    = true;
-  new_body.entity_id    = entity_id;
+  new_body.friction            = friction;
+  new_body.max_speed           = max_speed;
+  new_body.is_kinematic        = is_kinematic;
+  new_body.is_active           = true;
+  new_body.entity_id           = entity_id;
 
   if (id == state.bodies->length) {
     dynlist_append(state.bodies, &new_body);
@@ -108,7 +120,6 @@ bool physics_intersect_tilemap(Rectangle *object, level *level)
   return colliding;
 }
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void physics_update(level *level)
 {
   physics_body *body;
@@ -184,9 +195,9 @@ void physics_update(level *level)
       body->velocity = mult_vector2(normalize_vector2(body->velocity), body->max_speed);
     }
 
-    // Update position
-    body->aabb.x += body->velocity.x;
-    body->aabb.y += body->velocity.y;
+    body->position.x += body->velocity.x;
+    body->position.y += body->velocity.y;
+    body->aabb = physics_get_aabb(body);
   }
 }
 

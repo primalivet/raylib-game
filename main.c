@@ -29,6 +29,20 @@
 #include "entity.h"
 #include "a_star.h"
 
+Vector2 from_world_to_grid(Vector2 position, float tile_size) {
+  return (Vector2){
+    (position.x - (tile_size / 2.0f)),
+    (position.y - (tile_size / 2.0f))
+  };
+}
+
+Vector2 from_frid_to_world(Vector2 position, float tile_size) {
+  return (Vector2){
+    ((position.x * tile_size) + (tile_size / 2.0f)),
+    ((position.y * tile_size) + (tile_size / 2.0f))
+  };
+}
+
 
 void read_input(physics_body *player_body) {
   // Reset player direction
@@ -45,34 +59,34 @@ void read_input(physics_body *player_body) {
   player_body->direction = normalize_vector2(player_body->direction);
 }
 
-void update_ai_body(physics_body *ai_body, physics_body *player_body) {
-  entity *entity = entities_get_entity(ai_body->entity_id);
-  if (CheckCollisionRecs(ai_body->aabb, player_body->aabb)) {
-    ai_body->is_active = false;
+void update_ai_body(physics_body *body, physics_body *player_body) {
+  entity *entity = entities_get_entity(body->entity_id);
+  if (CheckCollisionRecs(body->aabb, player_body->aabb)) {
+    body->is_active = false;
     entity->is_active  = false;
   }
 
-  float player_distance        = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ player_body->aabb.x, player_body->aabb.y});
+  float player_distance        = euclidean_distance(body->position, player_body->position);
   bool is_far_away_from_player = (player_distance / TILE_SIZE) > 7.0f;  // TODO: move number to config
   bool generate_waypoints      = !is_far_away_from_player && entity->waypoints == NULL;
   bool follow_waypoints        = entity->waypoints                             != NULL && entity->current_waypoint_index < entity->waypoints->length;
   bool clear_waypoints         = entity->waypoints                             != NULL && entity->current_waypoint_index >= entity->waypoints->length;
 
   if (generate_waypoints) {
-    IntVector2 origin              = intvec2_from_vec2((Vector2){ ai_body->aabb.x / TILE_SIZE, ai_body->aabb.y / TILE_SIZE });
-    IntVector2 goal                = intvec2_from_vec2((Vector2){ player_body->aabb.x / TILE_SIZE, player_body->aabb.y / TILE_SIZE });
+    IntVector2 origin              = intvec2_from_vec2((Vector2){ body->position.x / TILE_SIZE, body->position.y / TILE_SIZE });
+    IntVector2 goal                = intvec2_from_vec2((Vector2){ player_body->position.x / TILE_SIZE, player_body->position.y / TILE_SIZE });
     entity->waypoints              = astar_search(&origin, &goal);
     entity->current_waypoint_index = 0;
   } 
 
   if (follow_waypoints) {
     Vector2 *waypoint                  = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                  // Tile Waypoint e.g. x:25, y:5
-    Vector2 coords                     = { (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f - ai_body->aabb.width/2.0f),
-                                           (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - ai_body->aabb.height/2.0f) };                                               // Waypoint in coords, e.g. x:400, y:80
-    float coords_distance              = euclidean_distance((Vector2){ ai_body->aabb.x, ai_body->aabb.y }, (Vector2){ coords.x, coords.y }); // Distance between player and waypoint
+    Vector2 coords                     = { (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.width/2.0f),
+                                           (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.height/2.0f) };                                               // Waypoint in coords, e.g. x:400, y:80
+    float coords_distance              = euclidean_distance((Vector2){ body->position.x, body->position.y }, (Vector2){ coords.x, coords.y }); // Distance between player and waypoint
     bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 3.0f;                                                                      // TODO: move number to config
-    Vector2 normalized_waypoint        = normalize_vector2((Vector2){ coords.x - ai_body->aabb.x, coords.y - ai_body->aabb.y }); 
-    ai_body->direction                 = normalized_waypoint;                                                                                // Set player direction
+    Vector2 normalized_waypoint        = normalize_vector2((Vector2){ coords.x - body->position.x, coords.y - body->position.y }); 
+    body->direction                 = normalized_waypoint;                                                                                // Set player direction
     
     if (is_within_waypoint_threshhold) {
       entity->current_waypoint_index++; // Move to next waypoint
@@ -142,7 +156,9 @@ int main(void)
 
   for (size_t i = 0; i < ENEMIES_COUNT; i++) {
     entities_add_entity( RED,
-                        (Rectangle){(25.0f + i) * level.tile_size, (5.0f + i) * level.tile_size, TILE_SIZE / 1.5f, TILE_SIZE / 1.5f},
+                        (Vector2){(25.0f + i) * level.tile_size, (5.0f + i) * level.tile_size },
+                        TILE_SIZE / 1.5f, 
+                        TILE_SIZE / 1.5f,
                         (Vector2){0.0f, 0.0f },
                         (Vector2){0.0f, 0.0f},
                         (Vector2){0.0f, 0.0f},
@@ -153,7 +169,9 @@ int main(void)
   }
 
   size_t  player_id = entities_add_entity( WHITE,
-                                          (Rectangle){4.0f * level.tile_size, 4.0f * level.tile_size, TILE_SIZE / 1.5f, TILE_SIZE / 1.5f},
+                                          (Vector2){4.0f * level.tile_size, 4.0f * level.tile_size} , 
+                                          TILE_SIZE / 1.5f,
+                                          TILE_SIZE / 1.5f,
                                           (Vector2){0.0f, 0.0f },
                                           (Vector2){0.0f, 0.0f},
                                           (Vector2){0.0f, 0.0f},
@@ -188,7 +206,9 @@ int main(void)
       entity *entity = entities_get_entity(i);  
       if (entity->is_active) continue;
       entities_add_entity(YELLOW,
-                          (Rectangle){(25.0f + i) * level.tile_size, (5.0f + i) * level.tile_size, TILE_SIZE / 1.5f, TILE_SIZE / 1.5f},
+                          (Vector2){(25.0f + i) * level.tile_size, (5.0f + i) * level.tile_size}, 
+                          TILE_SIZE / 1.5f,
+                          TILE_SIZE / 1.5f,
                           (Vector2){0.0f, 0.0f },
                           (Vector2){0.0f, 0.0f},
                           (Vector2){0.0f, 0.0f},

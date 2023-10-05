@@ -5,6 +5,7 @@
 #include "level.h"
 
 typedef struct {
+  Vector2 position;           // Logical position, viewed as the center of the body (AABB will be centered around this position)
   Rectangle aabb;             // AABB = axis aligned bounding box
   Vector2 direction;          // Normalized direction vector
   Vector2 velocity;           // Current velocity (speed + direction)
@@ -25,7 +26,7 @@ typedef struct {
 void physics_init(float gravity);
 void physics_deinit();
 physics_body *physics_get_body(size_t id);
-size_t physics_add_body(Rectangle aabb, Vector2 direction, Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed, bool is_kinematic, size_t entity_id);
+size_t physics_add_body(Vector2 position, float width, float height, Vector2 direction, Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed, bool is_kinematic, size_t entity_id);
 void physics_update(level *level);
 
 #endif
