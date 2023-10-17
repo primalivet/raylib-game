@@ -9,8 +9,13 @@
 //----------------------------------------------------------------------------- 
 
 #define TITLE         "Game"
-#define SCREEN_WIDTH  640
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH  640 * 2
+#define SCREEN_HEIGHT 480 * 2
+#define NPC_IS_FAR_FROM_PLAYER_THRESHOLD 7.0f
+#define NPC_IS_CLOSE_TO_PLAYER_THRESHOLD 2.0f
+#define NPC_IS_CLOSE_TO_WAYPOINT_THRESHOLD 2.0f
+#define NPC_SEPERATION_VECTOR_SCALAR  10.0f
+
 
 #define ENEMIES_COUNT 1
 #define TILE_SIZE     16
@@ -31,8 +36,7 @@
 
 void read_input(physics_body *player_body) {
   // Reset player direction
-  player_body->direction.x = 0.0f;
-  player_body->direction.y = 0.0f;
+  player_body->direction = (Vector2){0.0f, 0.0f};
 
   // Set player direction based on input 
   if (IsKeyDown(KEY_LEFT))  player_body->direction.x -= 1.0f;
@@ -41,87 +45,73 @@ void read_input(physics_body *player_body) {
   if (IsKeyDown(KEY_DOWN))  player_body->direction.y += 1.0f;
 
   // Normalize player direction
-  player_body->direction = normalize_vector2(player_body->direction);
+  player_body->direction = vector2_normalize(player_body->direction);
 }
 
-// tile_def get_tiledef_at_position(const Vector2 position, const level *level) {
-//   Vector2 tile_position = (Vector2){position.x / TILE_SIZE, position.y / TILE_SIZE};
-//   IntVector2 tile_position_int = intvec2_from_vec2(tile_position);
-//   if ((tile_position_int.x < 0 || tile_position_int.x > level->width) || 
-//       (tile_position_int.y < 0 || tile_position_int.y > level->height)) {
-//     printf("Out of bounds when accessing tilemap at %d, %d\n", tile_position_int.x, tile_position_int.y);
-//     exit(1);
-//   }
-//   int tile_number = level->tilemap[tile_position_int.y][tile_position_int.x];
-//   tile_def tile_def = level->tile_defs[tile_number];
-//   return tile_def;
-// }
+void update_npc_body(physics_body *npc_body, physics_body *player_body, level *level) {
+  entity *entity = entities_get_entity(npc_body->entity_id);
 
-// bool has_line_of_sight(Vector2 origin, Vector2 goal, const level *level) {
-//   Vector2 direction = normalize_vector2(sub_vector2(goal, origin));
-//   Vector2 current_position = origin;
-// 
-//   while(euclidean_distance(current_position, goal) > 2.0f) {
-//     current_position = add_vector2(current_position, direction);
-//     tile_def tile_def = get_tiledef_at_position(current_position, level);
-//     if (!tile_def.is_walkable) {
-//       return false;
-//     } 
-//   }
-//   return true;
-// }
-
-#pragma  GCC diagnostic ignored "-Wunused-parameter"
-void update_ai_body(physics_body *body, physics_body *player_body, level *level) {
-  entity *entity = entities_get_entity(body->entity_id);
-  if (CheckCollisionRecs(body->aabb, player_body->aabb)) {
-    body->is_active = false;
-    entity->is_active  = false;
+  if (CheckCollisionRecs(npc_body->aabb, player_body->aabb)) {
+    npc_body->is_active = false;
+    entity->is_active   = false;
   }
 
-  float player_distance        = euclidean_distance(body->position, player_body->position);
-  bool is_far_away_from_player = (player_distance / TILE_SIZE) > 7.0f;  // TODO: move number to config
-  bool is_next_to_player       = (player_distance / TILE_SIZE) < 2.0f;
-  bool generate_waypoints      = !is_far_away_from_player && entity->waypoints == NULL;
-  bool follow_waypoints        = entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length;
-  bool clear_waypoints         = is_next_to_player || (entity->waypoints != NULL && entity->current_waypoint_index >= entity->waypoints->length);
+  float distance_to_player = vector2_euclidean_distance(npc_body->position, player_body->position);
+  bool is_far_from_player  = (distance_to_player / TILE_SIZE) > NPC_IS_FAR_FROM_PLAYER_THRESHOLD;
+  bool is_close_to_player  = (distance_to_player / TILE_SIZE) < NPC_IS_CLOSE_TO_PLAYER_THRESHOLD;
+  bool generate_waypoints  = !is_far_from_player && entity->waypoints == NULL;
+  bool follow_waypoints    = entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length;
+  bool clear_waypoints     = is_close_to_player || (entity->waypoints != NULL && entity->current_waypoint_index >= entity->waypoints->length);
 
   if (generate_waypoints) {
-    IntVector2 origin              = intvec2_from_vec2((Vector2){ body->position.x / TILE_SIZE, body->position.y / TILE_SIZE });
-    IntVector2 goal                = intvec2_from_vec2((Vector2){ player_body->position.x / TILE_SIZE, player_body->position.y / TILE_SIZE });
-    entity->waypoints              = astar_search(&origin, &goal);
-    entity->current_waypoint_index = 0;
+    Vector2 origin                 = vector2_div_by_scalar(npc_body->position, TILE_SIZE);    // Convert from coords to tilemap
+    Vector2 goal                   = vector2_div_by_scalar(player_body->position, TILE_SIZE); // Convert from coords to tilemap
+    entity->waypoints              = astar_search(&origin, &goal);                            // Find path
+    entity->current_waypoint_index = 0;                                                       // Set first waypoint as start
   } 
 
   if (follow_waypoints) {
-    // TODO: smoothen path using has_line_of_sight
-    // if (entity->waypoints != NULL && entity->current_waypoint_index < entity->waypoints->length - 1) {
-    //   IntVector2 *waypoint    = dynlist_get_at(entity->waypoints, entity->current_waypoint_index + 1);
-    //   Vector2 waypoint_coords = from_grid_to_world_approx((Vector2){ waypoint->x, waypoint->y }, TILE_SIZE);
-    //   bool can_see            = has_line_of_sight(body->position, waypoint_coords, level);
-    //   while (can_see) {
-    //     entity->color = GREEN;
-    //     entity->current_waypoint_index++;
-    //     waypoint          = dynlist_get_at(entity->waypoints, entity->current_waypoint_index + 1);
-    //     can_see = has_line_of_sight(body->position, waypoint_coords, level);
-    //   }
-    // }
+    Vector2 *tilemap_waypoint         = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);            // Current waypoint
+    Vector2 world_waypoint            = vector2_mult_by_scalar(*tilemap_waypoint, TILE_SIZE);                         // Convert from tilemap to world
+    world_waypoint.x                 += (TILE_SIZE / 2.0f - npc_body->aabb.width/2.0f);                               // Center in tile middle on x axis
+    world_waypoint.y                 += (TILE_SIZE / 2.0f - npc_body->aabb.height/2.0f);                              // Center in tile middle on y axis
+    float npc_distance_to_waypoint    = vector2_euclidean_distance(npc_body->position, world_waypoint);
+    bool is_npc_close_to_waypoint     = (npc_distance_to_waypoint / TILE_SIZE)  < NPC_IS_CLOSE_TO_WAYPOINT_THRESHOLD; // TODO: move magic number
+    Vector2 npc_direction_to_waypoint = vector2_sub(world_waypoint, npc_body->position);
+    Vector2 npc_current_tile_position = vector2_div_by_scalar(npc_body->position, TILE_SIZE);                         // Convert npc world position to tile position
 
-    Vector2 *waypoint                  = dynlist_get_at(entity->waypoints, entity->current_waypoint_index);                                     // Tile Waypoint e.g. x:25, y:5
-    Vector2 coords                     = { (waypoint->x * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.width/2.0f),
-                                           (waypoint->y * TILE_SIZE) + (TILE_SIZE / 2.0f - body->aabb.height/2.0f) };                           // Waypoint in coords, e.g. x:400, y:80
-    float coords_distance              = euclidean_distance((Vector2){ body->position.x, body->position.y }, (Vector2){ coords.x, coords.y });  // Distance between player and waypoint
-    bool is_within_waypoint_threshhold = (coords_distance / TILE_SIZE) < 2.5f;                                                                  // TODO: move number to config
-    Vector2 normalized_waypoint        = normalize_vector2((Vector2){ coords.x - body->position.x, coords.y - body->position.y }); 
-    body->direction                    = normalized_waypoint;                                                                                   // Set player direction
+    // Calculate seperation vector for NPC in relation to non-walkable tiles
+    Vector2 seperation = (Vector2){0.0f,0.0f};
+    for (int dx = -1; dx <= 1; dx++) {
+      for (int dy = -1; dy <= 1; dy++) {
+        int x = npc_current_tile_position.x + dx;
+        int y = npc_current_tile_position.y + dy;
+        tile_def cardinal_tile_def = level->tile_defs[level->tilemap[y][x]];
+        if (!cardinal_tile_def.is_walkable) {
+          Vector2 cardinal_tile_position = (Vector2) { x, y };
+          Vector2 cardinal_world_position                     = vector2_mult_by_scalar(cardinal_tile_position, TILE_SIZE);
+          cardinal_world_position                             = vector2_add_by_scalar(cardinal_world_position, (TILE_SIZE / 2.0f)); // Center in tile middle
+          Vector2 direction_away_from_cardinal_world_position = vector2_sub(npc_body->position, cardinal_world_position);
+          seperation                                          = vector2_add(seperation, vector2_normalize(direction_away_from_cardinal_world_position));
+        }
+      }
+    }
 
-    if (is_within_waypoint_threshhold) {
+    // Apply seperation vector scaler
+    seperation = vector2_normalize(seperation);
+    seperation = vector2_mult_by_scalar(seperation, NPC_SEPERATION_VECTOR_SCALAR);
+
+    // Update npc direction
+    npc_body->direction = vector2_add(npc_direction_to_waypoint, seperation);
+    npc_body->direction = vector2_normalize(npc_body->direction);
+
+    if (is_npc_close_to_waypoint) {
       entity->current_waypoint_index++; // Move to next waypoint
     }
   } 
 
   if (clear_waypoints) {
-    body->direction = (Vector2){ 0.0f, 0.0f };
+    npc_body->direction = (Vector2){ 0.0f, 0.0f };
     free_reconstructed_path(entity->waypoints);
     entity->waypoints              = NULL;
     entity->current_waypoint_index = 0;
@@ -160,6 +150,29 @@ void draw_debug_body(physics_body *body) {
 }
 
 //----------------------------------------------------------------------------- 
+// Collision Mask
+//----------------------------------------------------------------------------- 
+
+int **create_collision_maks(level *level) {
+  int **collision_mask = malloc(sizeof(int) * level->height);
+  for (int y = 0; y < level->height; y++) {
+    collision_mask[y] = malloc(sizeof(int) * level->width);
+    for (int x = 0; x < level->width; x++) {
+      int tile_index = level->tilemap[y][x];
+      collision_mask[y][x] = level->tile_defs[tile_index].is_walkable;
+    }
+  }
+  return collision_mask;
+}
+
+void free_collision_maks(level *level, int **collision_mask) {
+  for (int y = 0; y < level->height; y++) {
+    free(collision_mask[y]);
+  }
+  free(collision_mask);
+}
+
+//----------------------------------------------------------------------------- 
 // MAIN
 //----------------------------------------------------------------------------- 
 
@@ -173,13 +186,7 @@ int main(void)
 
   Texture tileset   = LoadTexture("resources/tiles-16.png");
   level   level     = load_level( TILE_SIZE, TILES_PER_ROW, "resources/level1.map", "resources/level1.def", &tileset);
-  int **collision_mask = malloc(sizeof(int) * level.height);
-  for (int y = 0; y < level.height; y++) {
-    collision_mask[y] = malloc(sizeof(int) * level.width);
-    for (int x = 0; x < level.width; x++) {
-      collision_mask[y][x] = level.tile_defs[level.tilemap[y][x]].is_walkable;
-    }
-  }
+  int **collision_mask = create_collision_maks(&level);
   astar_allocate(level.width, level.height, collision_mask);
 
   for (size_t i = 0; i < ENEMIES_COUNT; i++) {
@@ -213,7 +220,7 @@ int main(void)
   Camera2D camera = init_camera(
     (Vector2){player_body->aabb.x + (player_body->aabb.width / 2.0f), player_body->aabb.y + (player_body->aabb.height / 2.0f)}, 
     (Vector2) { SCREEN_WIDTH/2.0f, SCREEN_HEIGHT/2.0f }, 
-    2.0f
+    4.0f
   );
 
   while(!WindowShouldClose()) 
@@ -226,7 +233,7 @@ int main(void)
       if (i == player_id) continue;
       entity *ai_entity = entities_get_entity(i);
       physics_body *ai_body = physics_get_body(ai_entity->body_id);
-      update_ai_body(ai_body, player_body, &level);
+      update_npc_body(ai_body, player_body, &level);
     }
 
     // respawn inactive AI entities
@@ -292,6 +299,7 @@ int main(void)
   entities_deinit();
   physics_deinit();
   astar_free();
+  free_collision_maks(&level, collision_mask);
   unload_level(&level);
   UnloadTexture(tileset);
   CloseWindow();

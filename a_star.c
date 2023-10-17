@@ -120,12 +120,12 @@ void print_iteration(bool pre_generation, astar_node *q, prio_queue *open_set, p
   printf("\n\n");
 }
 
-dynlist *astar_search(IntVector2 *origin, IntVector2 *goal)
+dynlist *astar_search(Vector2 *origin, Vector2 *goal)
 {
   prio_queue *open_set   = queue_allocate(10, 0.5f, astar_compare_nodes);
   prio_queue *closed_set = queue_allocate(10, 0.5f, astar_compare_nodes);
 
-  float h_cost = euclidean_distance((Vector2){origin->x, origin->y}, 
+  float h_cost = vector2_euclidean_distance((Vector2){origin->x, origin->y}, 
                                     (Vector2){goal->x, goal->y});
 
   astar_node *origin_node  = malloc(sizeof(astar_node));
@@ -208,7 +208,6 @@ dynlist *astar_search(IntVector2 *origin, IntVector2 *goal)
       if (valid_cardinal_positions[i]) {
         astar_node *neighbour = malloc(sizeof(astar_node));
         if (!neighbour) { printf("Failed to allocate neighbour\n"); exit(1); }
-        /* Vector2 q_pos         = (Vector2){ q->x, q->y }; */
         Vector2 goal_pos      = (Vector2){ goal->x, goal->y };
         Vector2 neighbour_pos = (Vector2){ cardinal_positions[i].x, cardinal_positions[i].y };
         bool is_diagonal      = false;
@@ -217,12 +216,11 @@ dynlist *astar_search(IntVector2 *origin, IntVector2 *goal)
         if (neighbour_pos.y > q->y && neighbour_pos.x < q->x) { is_diagonal = true; } // South West
         if (neighbour_pos.y > q->y && neighbour_pos.x > q->x) { is_diagonal = true; } // South East
 
-        /* float g_cost          = q->g_cost + manhattan_distance(neighbour_pos, q_pos); */
         float g_cost          = 1;
         if (is_diagonal) {
           g_cost = 1.414f;
         }
-        float h_cost          = euclidean_distance(neighbour_pos, goal_pos);
+        float h_cost          = vector2_euclidean_distance(neighbour_pos, goal_pos);
         float f_cost          = g_cost + h_cost;
         neighbour->x          = neighbour_pos.x;
         neighbour->y          = neighbour_pos.y;
