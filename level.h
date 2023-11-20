@@ -12,14 +12,15 @@ typedef struct
 
 typedef struct 
 {
-  int     width;
-  int     height;
-  int     tile_size;
-  int     tiles_per_row;
-  int     tiles_count;
-  Texture *tileset;
-  int     **tilemap;
+  int      width;
+  int      height;
+  int      tile_size;
+  int      tiles_per_row;
+  int      tiles_count;
+  Texture  *tileset;
+  int      **tilemap;
   tile_def *tile_defs;
+  int      **collision_mask;
 } level;
 
 level load_level(int tile_size, int tiles_per_row, const char *tilemap_path, const char *tile_defs_path, Texture2D *tileset);

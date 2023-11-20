@@ -22,17 +22,8 @@ typedef struct astar_node {
   struct astar_node *parent; // Reference to reconstruct the path
 } astar_node;
 
-typedef struct {
-  int width;
-  int height;
-  int **collision_mask;
-} astar_state;
-
-
-void astar_allocate(int width, int height, int **collision_mask);
 int astar_compare_nodes(const void *a, const void *b);
 void free_reconstructed_path(dynlist *path);
-void astar_free();
-dynlist *astar_search(Vector2 *origin, Vector2 *target);
+dynlist *astar_search(level *level, Vector2 *origin, Vector2 *target);
 
 #endif
