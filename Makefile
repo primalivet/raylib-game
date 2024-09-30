@@ -1,56 +1,32 @@
-CC = cc
+CC =
+CFLAGS = -g -Wall -Wextra -Werror
+LDFLAGS =
+OPERATIN_SYSTEM := $(shell uname -s)
 
-CFLAGS = \
-	 -g \
-	 -Wall \
-	 -Wextra \
-	 -Werror \
-	 -I/opt/homebrew/Cellar/raylib/4.5.0/include 
-
-LDFLAGS = \
-	 -L/opt/homebrew/Cellar/raylib/4.5.0/lib \
-	 -lraylib 
-
-# Source files and derive object files from source files
-SRC_FILES = vector2.c \
-	    prio_queue.c \
-	    a_star.c \
-	    dynlist.c \
-	    level.c \
-	    physics.c \
-	    entity.c \
-	    camera.c \
-	    main.c 
-
-OBJ_FILES = $(SRC_FILES:.c=.o)
+# Setup compiler it's flags depending on operating system
+ifeq ($(OPERATIN_SYSTEM),Darwin)
+	CC = clang
+	CFLAGS += -I./vendor/darwin/include
+	LDFLAGS += -L./vendor/darwin/lib -lraylib -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
+else
+	$(error Unsupported operating system)
+endif
 
 TARGET = ./bin/game
+SRC_FILES = vector2.c prio_queue.c a_star.c dynlist.c level.c physics.c entity.c camera.c main.c 
+OBJ_FILES = $(SRC_FILES:.c=.o)
 
-# Test source files and derive object files from source files
-TEST_SRC_FILES = main_test.c
-
-TEST_OBJ_FILES = $(TEST_SRC_FILES:.c=.o)
-
-TEST_TARGET = ./bin/test
-
+# Default command (since it's first), depends on the game executable
 all: $(TARGET)
 
-# Link target executable
+# Build the game executable, depends on the object files
 $(TARGET): $(OBJ_FILES)
-	$(CC) $(OBJ_FILES) -o $(TARGET) $(LDFLAGS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ_FILES) -o $(TARGET) 
 
-# Run test executable
-test: $(TEST_TARGET)
-	./$(TEST_TARGET)
-	
-# Link test executable
-$(TEST_TARGET): $(filter-out main.o, $(OBJ_FILES)) $(TEST_OBJ_FILES)
-	$(CC) $(filter-out main.o, $(OBJ_FILES)) $(TEST_OBJ_FILES) -o $(TEST_TARGET) $(LDFLAGS)
-
-# Pattern rule to compile source files into object files
+# Build object files from source files
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
-# Remove target executables and object files
+	
+.PHONY: clean
 clean:
-	rm -f $(OBJ_FILES) $(TARGET) $(TEST_OBJ_FILES) $(TEST_TARGET)
+	rm -rf $(OBJ_FILES) $(TARGET)
