@@ -1,5 +1,5 @@
 CC =
-CFLAGS = -g -Wall -Wextra -Werror
+CFLAGS = -g -O0 -Wall -Wextra -Werror
 LDFLAGS =
 OPERATIN_SYSTEM := $(shell uname -s)
 
