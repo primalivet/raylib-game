@@ -1,4 +1,94 @@
-#include <math.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "raylib.h"
+#include "physics.h"
+#include "vector2.h"
+
+// TODO: move to common place, duplicated in enemy.c
+static bool is_comment_line(const char *line) {
+  while (*line) {
+    if (*line == '#')
+      return true;
+    if (!isspace((unsigned int)*line))
+      return false;
+    line++;
+  }
+  return false;
+}
+
+void physics_load_bodies(physics_t *physics) {
+  FILE *bodies_file = fopen(physics->enemies_path, "r");
+  if (bodies_file == NULL) {
+    TraceLog(LOG_FATAL,"PHYSICS: Error loading physics bodies file!");
+    exit(1);
+  } else TraceLog(LOG_INFO, "LEVEL: Loaded physics bodies file successfully");
+
+
+  char bodies_buffer[1000];
+  int i = 0;
+  while(fgets(bodies_buffer, sizeof(bodies_buffer), bodies_file) && i < physics->bodies_count) {
+    if (is_comment_line(bodies_buffer)) continue;
+    char *token = NULL;
+    token = strtok(bodies_buffer, " \n");
+    int position_x = atof(token);
+    token = strtok(NULL, " \n");
+    int position_y = atof(token);
+    token = strtok(NULL, " \n");
+    int width = atof(token);
+    token = strtok(NULL, " \n");
+    int height = atof(token);
+
+    physics_body_t body = {0};
+    body.position = (vector2_t){ .x = position_x, .y = position_y };
+    body.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
+    body.direction              = (vector2_t){ .x = 0.0f, .y  = 0.0f };
+    body.friction               = 0.2f;
+    body.speed                  = 0.5f;
+    body.reset_dir_frames_delay = 6;
+    body.aabb =  (Rectangle){ .x = position_x - (width / 2.0f), 
+                              .y = position_y - (height / 2.0f), 
+                              .width = width, 
+                              .height = height };
+
+
+    physics->bodies[i] = body;
+    i++;
+  }
+}
+
+void physics_init(physics_t *physics, physics_options_t *physics_options) {
+  physics->bodies_count  = physics_options->bodies_count;
+  physics->bodies_active = physics_options->bodies_count;
+  physics->enemies_path = physics_options->enemies_path;
+  physics->bodies        = (physics_body_t *)malloc(physics_options->bodies_count * sizeof(physics_body_t));
+  if (physics->bodies == NULL) {
+    TraceLog(LOG_FATAL, "PHYSICS: Failed to allocate memory for bodies");
+    physics_free(physics);
+    exit(1);
+  }
+
+  physics_load_bodies(physics);
+}
+
+void physics_free(physics_t *physics) {
+  if (physics->bodies) {
+    free(physics->bodies);
+    physics->bodies = NULL;
+    TraceLog(LOG_INFO, "PHYSICS: Successfully freed tiledef");
+  }
+}
+
+void physics_draw_TEMP(physics_t *physics) {
+
+  for (int i = 0; i < physics->bodies_active; i++) {
+    physics_body_t *body = &physics->bodies[i];
+    DrawRectangleRec(body->aabb, YELLOW);
+  }
+}
+
+/*#include <math.h>
 #include "physics.h"
 #include "dynlist.h"
 #include "utils.h"
@@ -220,4 +310,4 @@ void physics_update(level *level) {
     body->aabb = physics_get_aabb(body);
   }
 }
-
+*/

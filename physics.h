@@ -1,5 +1,35 @@
+#include "vector2.h"
+
 #ifndef PHYSICS_H
 #define PHYSICS_H
+
+typedef struct {
+  vector2_t position;
+  vector2_t direction;
+  vector2_t velocity;
+  float     speed;
+  float     friction;
+  Rectangle aabb;
+  int       reset_dir_frames_delay;
+} physics_body_t;
+
+typedef struct {
+  int bodies_count;
+  const char *enemies_path;
+} physics_options_t;
+
+typedef struct {
+  int            bodies_active;
+  int            bodies_count;
+  const char    *enemies_path;
+  physics_body_t *bodies;
+} physics_t;
+
+void physics_init(physics_t *physics, physics_options_t *physics_options);
+void physics_free(physics_t *physics);
+void physics_update(physics_t *physics);
+void physics_draw_TEMP(physics_t *physics);
+/*
 #include <raylib.h>
 #include "dynlist.h"
 #include "level.h"
@@ -28,5 +58,6 @@ void physics_deinit();
 physics_body *physics_get_body(size_t id);
 size_t physics_add_body(Vector2 position, float width, float height, Vector2 direction, Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed, bool is_kinematic, size_t entity_id);
 void physics_update(level *level);
+*/
 
 #endif

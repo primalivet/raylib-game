@@ -1,17 +1,15 @@
 #include <raylib.h>
 #include "camera.h"
+#include "vector2.h"
+#include "player.h"
 
-Camera2D init_camera(Vector2 target, Vector2 offset, float zoom) 
-{
-  Camera2D camera;
-  camera.target   = target;
-  camera.offset   = offset;
-  camera.rotation = 0;
-  camera.zoom     = zoom;
-  return camera;
+void camera_init(camera_t *camera, camera_options_t *camera_options) {
+  camera->target   = camera_options->target;
+  camera->offset   = camera_options->offset;
+  camera->zoom     = camera_options->zoom;
+  camera->rotation = 0.0f;
 }
 
-void update_camera(Camera2D *camera, Vector2 target) 
-{
-  camera->target = target;
+void camera_update(camera_t *camera, player_t *player) {
+  camera->target = player->position;
 }
