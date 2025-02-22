@@ -25,7 +25,7 @@ typedef struct {
 } player_t;
 
 void player_init(player_t *player, player_options_t *player_options);
-void player_update(player_t *player, input_t *input);
+void player_update(player_t *player, entity_input_comp_t *input);
 void player_draw(player_t *player);
 
 #endif

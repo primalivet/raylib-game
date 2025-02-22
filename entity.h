@@ -1,24 +1,67 @@
+#include "vector2.h"
+
 #ifndef ENTITY_H
 #define ENTITY_H
-#include "dynlist.h"
-#include "physics.h"
+#include "raylib.h"
+
+#define MAX_ENTITIES 10
 
 typedef struct {
-  Color color;                   // TODO: remove when replaced by sprite
-  size_t body_id;                // Reference to a physics body
-  dynlist *waypoints;            // List of vectors
-  size_t current_waypoint_index; // current index in waypoints
-  bool is_active;
-} entity;
+  int       entity_id;
+  vector2_t position;
+  vector2_t direction;
+  vector2_t velocity;
+  float     speed;
+  float     friction;
+  Rectangle aabb;
+  int       reset_dir_frames_delay;
+} entity_physics_comp_t;
 
 typedef struct {
-  dynlist *entities;
-} entities_state;
+  bool up;
+  bool down;
+  bool left;
+  bool right;
+} entity_input_comp_t;
 
-void entities_init();
-void entities_deinit();
-size_t entities_count();
-entity *entities_get_entity(size_t id);
-size_t entities_add_entity(Color color, Vector2 position, float width, float height, Vector2 direction, Vector2 velocity, Vector2 acceleration, float acceleration_factor, float friction, float max_speed,  bool is_kinematic);
+
+typedef enum {
+  ENTITY_TYPE_PLAYER,
+  ENTITY_TYPE_NPC,
+} entity_type_t;
+
+typedef struct {
+  entity_type_t type;
+  Color    color;
+  entity_physics_comp_t physics;
+} entity_npc_t;
+
+typedef struct {
+  entity_type_t type;
+  Color    color;
+  entity_physics_comp_t physics;
+  entity_input_comp_t   input;
+} entity_player_t;
+
+typedef union {
+  entity_player_t player;
+  entity_npc_t npc;
+} entity_t;
+
+typedef struct {
+  const char *entities_path;
+} entities_options_t;
+
+typedef struct {
+  entity_player_t player;
+  entity_npc_t    enemies[MAX_ENTITIES - 1];
+  int             enemies_count;
+  entity_t        entities[MAX_ENTITIES];
+  int             entities_count;
+} entities_t;
+
+
+void entities_init(entities_t *entities, entities_options_t *entities_options);
+void entities_draw(entities_t *entities);
 
 #endif

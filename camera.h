@@ -1,6 +1,5 @@
 #include <raylib.h>
 #include "vector2.h"
-#include "player.h"
 
 #ifndef CAMERA_H
 #define CAMERA_H
@@ -19,6 +18,6 @@ typedef struct {
 } camera_options_t;
 
 void camera_init(camera_t *camera, camera_options_t *camera_options);
-void camera_update(camera_t *camera, player_t *player); 
+void camera_update(camera_t *camera, vector2_t *new_target); 
 
 #endif

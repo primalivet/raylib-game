@@ -1,7 +1,7 @@
 #include <raylib.h>
 #include "camera.h"
 #include "vector2.h"
-#include "player.h"
+#include "entity.h"
 
 void camera_init(camera_t *camera, camera_options_t *camera_options) {
   camera->target   = camera_options->target;
@@ -10,6 +10,6 @@ void camera_init(camera_t *camera, camera_options_t *camera_options) {
   camera->rotation = 0.0f;
 }
 
-void camera_update(camera_t *camera, player_t *player) {
-  camera->target = player->position;
+void camera_update(camera_t *camera, vector2_t *new_target) {
+  camera->target = *new_target;
 }
