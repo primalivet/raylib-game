@@ -10,6 +10,20 @@ void camera_init(camera_t *camera, camera_options_t *camera_options) {
   camera->rotation = 0.0f;
 }
 
+void camera_start(camera_t *camera) {
+  Camera2D rlcamera = (Camera2D) {
+    .zoom = camera->zoom,
+    .offset = (Vector2){ .x = camera->offset.x, .y = camera->offset.y },
+    .target = (Vector2){ .x = camera->target.x, .y = camera->target.y },
+    .rotation =camera->rotation,
+  };
+  BeginMode2D(rlcamera);
+}
+
+void camera_end() {
+  EndMode2D();
+}
+
 void camera_update(camera_t *camera, vector2_t *new_target) {
   camera->target = *new_target;
 }

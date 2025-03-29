@@ -8,6 +8,7 @@
 #include "entity.h"
 #include "entity_input.h"
 #include "entity_physics.h"
+#include "debug.h"
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
@@ -51,14 +52,16 @@ int main() {
     input_update(&entities.player.input);
     physics_update(&entities.player.physics, &level, &entities.player.input);
     /*for (int i = 0; i < entities.enemies_count; i++) physics_update(&entities.enemies[i].physics, &level, NULL);*/
-    // TODO: check for collision, apply collision response
     camera_update(&camera, &entities.player.physics.position);
 
-    render_begin(&camera);
+    render_begin();
+    camera_start(&camera);
 
     level_draw(&level);
     entities_draw(&entities);
 
+    camera_end();
+    debug_draw(&entities.player);
     render_end();
   }
 
