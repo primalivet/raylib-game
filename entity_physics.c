@@ -5,167 +5,115 @@
 #include "level.h"
 #include "vector2.h"
 
-typedef struct {
-  vector2_t n;
-  vector2_t s;
-  vector2_t w;
-  vector2_t e;
-  vector2_t nw;
-  vector2_t ne;
-  vector2_t sw;
-  vector2_t se;
-} cardinal_positions_t;
-
-cardinal_positions_t surrounding_cardinal_positions(level_t *level, vector2_t *position) {
-  int tile_x = (int)floor(position->x / level->tileset_tile_size);
-  int tile_y = (int)floor(position->y / level->tileset_tile_size); 
-
-  cardinal_positions_t cardinal_positions = {0};
-
-  cardinal_positions.n  = (vector2_t){ .x = tile_x,     .y = tile_y - 1 };
-  cardinal_positions.s  = (vector2_t){ .x = tile_x,     .y = tile_y + 1 };
-  cardinal_positions.w  = (vector2_t){ .x = tile_x - 1, .y = tile_y     };
-  cardinal_positions.e  = (vector2_t){ .x = tile_x + 1, .y = tile_y     };
-  cardinal_positions.nw = (vector2_t){ .x = tile_x - 1, .y = tile_y - 1 };
-  cardinal_positions.ne = (vector2_t){ .x = tile_x + 1, .y = tile_y - 1 };
-  cardinal_positions.sw = (vector2_t){ .x = tile_x - 1, .y = tile_y + 1 };
-  cardinal_positions.se = (vector2_t){ .x = tile_x + 1, .y = tile_y + 1 };
-
-  return cardinal_positions;
-}
-void surrounding_cardinal_positions_list(vector2_t output[], level_t *level, vector2_t *position) {
-  cardinal_positions_t cardinal_positions = surrounding_cardinal_positions(level, position);
-  output[0] = cardinal_positions.n;
-  output[1] = cardinal_positions.s;
-  output[2] = cardinal_positions.w;
-  output[3] = cardinal_positions.e;
-  output[4] = cardinal_positions.nw;
-  output[5] = cardinal_positions.ne;
-  output[6] = cardinal_positions.sw;
-  output[7] = cardinal_positions.se;
-}
-
-bool collision_intersect_rect(Rectangle first, Rectangle second) {
-  bool intersects = (
-    (first.x < (second.x + second.width) &&  // Left   edge of first is to the right of the right edge of second
-    (first.x + first.width) > second.x) &&   // Right  edge of first is to the left  of the left  edge of second
-    (first.y < (second.y + second.height) && // Top    edge of first is above the bottom edge of second
-    (first.y + first.height) > second.y)     // Bottom edge of first is below the top    edge of second
-  );
-  return intersects;
-}
-
-/*void collision_update(level_t *level, entities_t *entities) {*/
-/*  vector2_t cardinal_positions[8] = {0};*/
-/*  surrounding_cardinal_positions_list(cardinal_positions, level, &entities->player.physics.position);*/
-/**/
-/*  for(int i = 0; i <= 7; i++) {*/
-/*    int x = cardinal_positions[i].x;*/
-/*    int y = cardinal_positions[i].y;*/
-/**/
-/*    int tile_idx = level->tilemap[y][x];*/
-/*    tiledef_t tiledef = level->tiledef[tile_idx];*/
-/**/
-/*    if (!tiledef.is_walkable) {*/
-/*      // TODO: handle surrounding collision*/
-/*    }*/
-/*  }*/
-/*}*/
-
 void physics_update(entity_physics_comp_t *physics_body, level_t *level,  entity_input_comp_t *input) {
-  /**
-   * apply friction, but stop when 0.0f so we dont get negative friction / auto sliding
-   */
+ 
+  // Apply direction from input
+
+  if (input != NULL) {
+    physics_body->direction.x = 0.0f;
+    physics_body->direction.y = 0.0f;
+    if (input->up)    physics_body->direction.y -= 1.0f;
+    if (input->down)  physics_body->direction.y += 1.0f;
+    if (input->left)  physics_body->direction.x -= 1.0f;
+    if (input->right) physics_body->direction.x += 1.0f;
+  }
+
+  // Normalize direction
+
+  float length = sqrt(physics_body->direction.x * physics_body->direction.x + physics_body->direction.y * physics_body->direction.y);
+  if (length != 0.0f) {
+    physics_body->direction.x /= length;
+    physics_body->direction.y /= length;
+  }
+
+  // Apply friction (down to but not under 0.0f, prevent sliding)
+
   if      (physics_body->velocity.y < 0.0f) physics_body->velocity.y = fmin(physics_body->velocity.y + physics_body->friction, 0.0f);
   else if (physics_body->velocity.y > 0.0f) physics_body->velocity.y = fmax(physics_body->velocity.y - physics_body->friction, 0.0f);
   if      (physics_body->velocity.x < 0.0f) physics_body->velocity.x = fmin(physics_body->velocity.x + physics_body->friction, 0.0f);
   else if (physics_body->velocity.x > 0.0f) physics_body->velocity.x = fmax(physics_body->velocity.x - physics_body->friction, 0.0f);
 
-  /**
-   * apply input direction
-   */
-  if (input != NULL) {
-    if      (input->up)    physics_body->direction.y = -1.0f;
-    else if (input->down)  physics_body->direction.y =  1.0f;
-    if      (input->left)  physics_body->direction.x = -1.0f;
-    else if (input->right) physics_body->direction.x =  1.0f;
+  // Apply direction and speed to velocity
 
-    /**
-   * delay reset of direction axis
-   *
-   * note: direction is reset with a delay over an amount of frames to be
-   * more tolerant towards the user releasing 2 opposite directional input 
-   * keys with some delay. this way the physics_body keeps the "last used direction"
-   */
-    static int frames_counter = 0;
-    frames_counter++;
-    if (frames_counter == physics_body->reset_dir_frames_delay) {
-      if ( !(input->up || input->down) && (input->left || input->right)) physics_body->direction.y = 0.0f; // reset y
-      if ((input->up || input->down) && !(input->left || input->right)) physics_body->direction.x = 0.0f;  // reset x
-      frames_counter = 0;
-    }
-    /**
-   * apply input velocity
-   */
-    if (input->up)    physics_body->velocity.y = -2.0f;
-    if (input->down)  physics_body->velocity.y =  2.0f;
-    if (input->left)  physics_body->velocity.x = -2.0f;
-    if (input->right) physics_body->velocity.x =  2.0f;
-  }
+  physics_body->velocity.x += physics_body->direction.x * physics_body->speed;
+  physics_body->velocity.y += physics_body->direction.y * physics_body->speed;
 
-  vector2_t proposed_position = { .x = physics_body->position.x + (physics_body->velocity.x * physics_body->speed), 
-                                  .y = physics_body->position.y + (physics_body->velocity.y * physics_body->speed) };
-  Rectangle proposed_aabb =     { .x = proposed_position.x, 
-                                  .y = proposed_position.y, 
-                                  .width = physics_body->aabb.width, 
-                                  .height = physics_body->aabb.height };
+  // Clamp velocity
 
-  vector2_t cardinal_positions[8] = {0};
-  surrounding_cardinal_positions_list(cardinal_positions, level, &proposed_position);
-  
-  bool is_colliding = false;
-  for(int i = 0; i <= 7; i++) {
-    int x = cardinal_positions[i].x;
-    int y = cardinal_positions[i].y;
+  float max_velocity = 2.0f; // Example maximum velocity (should be set on the pyhsics_body?)
+  if (physics_body->velocity.x > max_velocity) physics_body->velocity.x = max_velocity;
+  if (physics_body->velocity.x < -max_velocity) physics_body->velocity.x = -max_velocity;
+  if (physics_body->velocity.y > max_velocity) physics_body->velocity.y = max_velocity;
+  if (physics_body->velocity.y < -max_velocity) physics_body->velocity.y = -max_velocity;
 
-    if ( y < 0 || y >= level->tilemap_rows ||
-         x < 0 || x >= level->tilemap_cols) {
-      /*TraceLog(LOG_ERROR, "Out of bounds (x: %d, y: %d)", x,y);*/
-      continue;
-    }
+  // Calculate proposed position
 
-    int tile_idx = level->tilemap[y][x];
-    tiledef_t tiledef = level->tiledef[tile_idx];
-    Rectangle cardinal_tile = (Rectangle){ .x = x, .y = y, .width = level->tileset_tile_size, .height = level->tileset_tile_size};
+  vector2_t proposed_position = { 
+    .x = physics_body->position.x + physics_body->velocity.x, 
+    .y = physics_body->position.y + physics_body->velocity.y 
+  };
 
-    if (!tiledef.is_walkable) {
-      is_colliding = collision_intersect_rect(proposed_aabb, cardinal_tile);
-    }
-  }
+  // Collision detection
 
-  // TODO: apply collision response if colliding
-  // TODO: apply position if no colliding
-  // TODO: handle wall sliding
+  vector2_t proposed_position_x = (vector2_t){ .x = proposed_position.x, .y = physics_body->position.y };
+  vector2_t proposed_position_y = (vector2_t){ .x = physics_body->position.x, .y = proposed_position.y };
 
-  if (is_colliding) {
-    physics_body->velocity = (vector2_t){ .x = 0.0f, .y = 0.0f };
-    /*physics_body->aabb = proposed_aabb;*/
+  // Get tile on all corners of proposed position X and Y
+
+  vector2_t proposed_position_x_tl = (vector2_t){ .x = proposed_position_x.x, .y = proposed_position_x.y };
+  vector2_t proposed_position_x_tr = (vector2_t){ .x = proposed_position_x.x + physics_body->aabb.width, .y = proposed_position_x.y };
+  vector2_t proposed_position_x_bl = (vector2_t){ .x = proposed_position_x.x, .y = proposed_position_x.y + physics_body->aabb.height };
+  vector2_t proposed_position_x_br = (vector2_t){ .x = proposed_position_x.x + physics_body->aabb.width, .y = proposed_position_x.y + physics_body->aabb.height };
+  vector2_t proposed_position_y_tl = (vector2_t){ .x = proposed_position_y.x, .y = proposed_position_y.y };
+  vector2_t proposed_position_y_tr = (vector2_t){ .x = proposed_position_y.x + physics_body->aabb.width, .y = proposed_position_y.y };
+  vector2_t proposed_position_y_bl = (vector2_t){ .x = proposed_position_y.x, .y = proposed_position_y.y + physics_body->aabb.height };
+  vector2_t proposed_position_y_br = (vector2_t){ .x = proposed_position_y.x + physics_body->aabb.width, .y = proposed_position_y.y + physics_body->aabb.height };
+
+  // Get tile index on all corners of proposed position X and Y
+  // TODO: Check out of bounds
+  // TODO: Abstract converting to tile index
+
+  int tile_idx_x_tl = level->tilemap[(int)floor(proposed_position_x_tl.y / level->tileset_tile_size)][(int)floor(proposed_position_x_tl.x / level->tileset_tile_size)];
+  int tile_idx_x_tr = level->tilemap[(int)floor(proposed_position_x_tr.y / level->tileset_tile_size)][(int)floor(proposed_position_x_tr.x / level->tileset_tile_size)];
+  int tile_idx_x_bl = level->tilemap[(int)floor(proposed_position_x_bl.y / level->tileset_tile_size)][(int)floor(proposed_position_x_bl.x / level->tileset_tile_size)];
+  int tile_idx_x_br = level->tilemap[(int)floor(proposed_position_x_br.y / level->tileset_tile_size)][(int)floor(proposed_position_x_br.x / level->tileset_tile_size)];
+  int tile_idx_y_tl = level->tilemap[(int)floor(proposed_position_y_tl.y / level->tileset_tile_size)][(int)floor(proposed_position_y_tl.x / level->tileset_tile_size)];
+  int tile_idx_y_tr = level->tilemap[(int)floor(proposed_position_y_tr.y / level->tileset_tile_size)][(int)floor(proposed_position_y_tr.x / level->tileset_tile_size)];
+  int tile_idx_y_bl = level->tilemap[(int)floor(proposed_position_y_bl.y / level->tileset_tile_size)][(int)floor(proposed_position_y_bl.x / level->tileset_tile_size)];
+  int tile_idx_y_br = level->tilemap[(int)floor(proposed_position_y_br.y / level->tileset_tile_size)][(int)floor(proposed_position_y_br.x / level->tileset_tile_size)];
+
+  // Check for collision on all corners of proposed position X and Y
+
+  bool collision_x_tl = !level->tiledef[tile_idx_x_tl].is_walkable;
+  bool collision_x_tr = !level->tiledef[tile_idx_x_tr].is_walkable;
+  bool collision_x_bl = !level->tiledef[tile_idx_x_bl].is_walkable;
+  bool collision_x_br = !level->tiledef[tile_idx_x_br].is_walkable;
+  bool collision_y_tl = !level->tiledef[tile_idx_y_tl].is_walkable;
+  bool collision_y_tr = !level->tiledef[tile_idx_y_tr].is_walkable;
+  bool collision_y_bl = !level->tiledef[tile_idx_y_bl].is_walkable;
+  bool collision_y_br = !level->tiledef[tile_idx_y_br].is_walkable;
+
+  // Sum up as axis collision (this will allow for sliding)
+
+  bool collision_x = collision_x_tl || collision_x_tr || collision_x_bl || collision_x_br;
+  bool collision_y = collision_y_tl || collision_y_tr || collision_y_bl || collision_y_br;
+
+  // Collision response
+
+  if (collision_x) {
+    physics_body->velocity.x = -physics_body->velocity.x; // Invert velocity
   } else {
-    physics_body->position = proposed_position;
-    physics_body->aabb = proposed_aabb;
+    physics_body->position.x = proposed_position.x;
   }
-  
 
+  if (collision_y) {
+    physics_body->velocity.y = -physics_body->velocity.y; // Invert velocity
+  } else {
+    physics_body->position.y = proposed_position.y;
+  }
 
-  ///**
-  // * adjust position from velocity scaled by speed
-  // */
-  //physics_body->position.y += physics_body->velocity.y * physics_body->speed;
-  //physics_body->position.x += physics_body->velocity.x * physics_body->speed;
+  // Update AABB position
 
-  ///**
-  // * center aabb around position
-  // */
-  //physics_body->aabb.x = physics_body->position.x - physics_body->aabb.width / 2.0f;
-  //physics_body->aabb.y = physics_body->position.y - physics_body->aabb.height / 2.0f;
+  physics_body->aabb.x = physics_body->position.x;
+  physics_body->aabb.y = physics_body->position.y;
 }
