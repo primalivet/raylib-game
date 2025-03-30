@@ -54,11 +54,8 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity.physics.friction               = friction;
       entity.physics.speed                  = speed;
       entity.physics.reset_dir_frames_delay = 6;
-      entity.physics.aabb =  (Rectangle){ .x = position_x - (width / 2.0f), 
-        .y = position_y - (height / 2.0f), 
-        .width = width, 
-        .height = height };
-
+      entity.physics.aabb =  (Rectangle){ .x = position_x, .y = position_y, 
+                                          .width = width,  .height = height };
       entity.type = ENTITY_TYPE_PLAYER;
       entity.color = RED;
       entity.input.up = false;
@@ -75,11 +72,8 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity.physics.friction               = friction;
       entity.physics.speed                  = speed;
       entity.physics.reset_dir_frames_delay = 6;
-      entity.physics.aabb =  (Rectangle){ .x = position_x - (width / 2.0f), 
-        .y = position_y - (height / 2.0f), 
-        .width = width, 
-        .height = height };
-
+      entity.physics.aabb =  (Rectangle){ .x = position_x, .y = position_y, 
+                                          .width = width,  .height = height };
       entity.type = ENTITY_TYPE_PLAYER;
       entity.color = RED;
       entity.type = ENTITY_TYPE_NPC;
