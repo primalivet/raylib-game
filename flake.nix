@@ -27,7 +27,6 @@
           buildInputs = with pkgs; [ raylib ];
 
           buildPhase = ''
-            mkdir -p bin
             clang -g -O0 -Wall -Wextra -Werror \
             level.c vector2.c render.c camera.c window.c \
             entity.c entity_physics.c entity_input.c debug.c main.c \
@@ -40,9 +39,9 @@
           '';
 
           installPhase = ''
-            mkdir -p $out/bin
-            cp raylib-game $out/bin
-            chmod +x $out/bin/raylib-game
+            mkdir -p $out
+            cp raylib-game $out
+            chmod +x $out/raylib-game
           '';
         };
     };
