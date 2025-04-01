@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "vector2.h"
 
 // TODO: move to common place, duplicated in enemy.c
 static bool is_comment_line(const char *line) {
@@ -88,16 +89,26 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
  * HINT: Player entity has to come first in entity file
  */
 void entities_init(entities_t *entities, entities_options_t *entities_options) {
+  // TODO: increament these as they are read from resources file
   entities->enemies_count = MAX_ENTITIES - 1;
   entities->entities_count = MAX_ENTITIES;
   entities_load(entities, entities_options);
 }
 
 void entities_draw(entities_t *entities) {
-  DrawRectangleRec(entities->player.physics.aabb, entities->player.color);
+  entity_player_t player = entities->player;
+
+  DrawRectangleLinesEx(player.physics.aabb, 1, player.color);
+
+  vector2_t player_center = (vector2_t){ .x = player.physics.position.x + (player.physics.aabb.width / 2), 
+                                         .y = player.physics.position.y + (player.physics.aabb.height / 2) };
+  vector2_t player_dir_end = (vector2_t){ .x = player.physics.position.x + (player.physics.aabb.width / 2) + ((player.physics.aabb.width  / 2) * player.physics.direction.x),
+                                          .y = player.physics.position.y + (player.physics.aabb.height / 2) + ((player.physics.aabb.width / 2) * player.physics.direction.y) };
+    
+  DrawLineV(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), player.color);
 
   for (int i = 0; i < entities->enemies_count; i++) {
     entity_npc_t *enemy = &entities->enemies[i];
-    DrawRectangleRec(enemy->physics.aabb, enemy->color);
+    DrawRectangleLinesEx(enemy->physics.aabb, 1, enemy->color);
   }
 }
