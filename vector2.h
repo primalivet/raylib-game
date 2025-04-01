@@ -8,6 +8,9 @@ typedef struct {
   float y;
 } vector2_t;
 
+#define TO_RL_VEC2(v) (*(Vector2*)&(v))
+#define TO_MY_VEC2(v) (*(vector2_t*)&(v))
+
 float vector2_magnitude(vector2_t v);
 vector2_t vector2_sub(vector2_t a, vector2_t b);
 vector2_t vector2_add(vector2_t a, vector2_t b);
