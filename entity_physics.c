@@ -5,17 +5,41 @@
 #include "level.h"
 #include "vector2.h"
 
-void physics_update(entity_physics_comp_t *physics_body, level_t *level,  entity_input_comp_t *input) {
+void physics_update(entity_t *entity, level_t *level) {
+
+  entity_physics_comp_t *physics_body = &entity->physics;
  
   // Apply direction from input
 
-  if (input != NULL) {
-    physics_body->direction.x = 0.0f;
-    physics_body->direction.y = 0.0f;
-    if (input->up)    physics_body->direction.y -= 1.0f;
-    if (input->down)  physics_body->direction.y += 1.0f;
-    if (input->left)  physics_body->direction.x -= 1.0f;
-    if (input->right) physics_body->direction.x += 1.0f;
+  if (entity->type == ENTITY_TYPE_PLAYER) {
+    entity_input_comp_t *input = &entity->player.input;
+
+    if (input != NULL) {
+      physics_body->direction.x = 0.0f;
+      physics_body->direction.y = 0.0f;
+
+      if (input->up)    physics_body->direction.y -= 1.0f;
+      if (input->down)  physics_body->direction.y += 1.0f;
+      if (input->left)  physics_body->direction.x -= 1.0f;
+      if (input->right) physics_body->direction.x += 1.0f;
+    }
+  } else {
+    switch(entity->npc.behaviour) {
+      case ENTITY_BEHAVIOUR_PATROL: 
+        // TODO: update to more complex behaviour
+        if (physics_body->direction.x == 0.0f && physics_body->direction.y == 0.0f) {
+          int random_x = rand() % 2;
+          int random_y = rand() % 2;
+          physics_body->direction.x = (float)random_x;
+          physics_body->direction.y = (float)random_y;
+        }
+        break;
+      default:
+      case ENTITY_BEHAVIOUR_STATIONARY:
+        physics_body->direction.x = 0.0f;
+        physics_body->direction.y = 0.0f;
+      break;
+    }
   }
 
   // Normalize direction
@@ -100,16 +124,39 @@ void physics_update(entity_physics_comp_t *physics_body, level_t *level,  entity
 
   // Collision response
 
-  if (collision_x) {
-    physics_body->velocity.x = -physics_body->velocity.x; // Invert velocity
-  } else {
-    physics_body->position.x = proposed_position.x;
-  }
+  if (entity->type == ENTITY_TYPE_PLAYER) {
+    if (collision_x) {
+      physics_body->velocity.x = -physics_body->velocity.x; // Invert velocity
+    } else {
+      physics_body->position.x = proposed_position.x;
+    }
 
-  if (collision_y) {
-    physics_body->velocity.y = -physics_body->velocity.y; // Invert velocity
+    if (collision_y) {
+      physics_body->velocity.y = -physics_body->velocity.y; // Invert velocity
+    } else {
+      physics_body->position.y = proposed_position.y;
+    }
   } else {
-    physics_body->position.y = proposed_position.y;
+    switch(entity->npc.behaviour) {
+      case ENTITY_BEHAVIOUR_PATROL: 
+        // TODO: update to more complex behaviour
+        if (collision_x) {
+          physics_body->direction.x = -physics_body->direction.x; // Invert direction
+          physics_body->velocity.x = -physics_body->velocity.x; // Invert velocity
+        } else {
+          physics_body->position.x = proposed_position.x;
+        }
+        if (collision_y) {
+          physics_body->direction.y = -physics_body->direction.y; // Invert direction
+          physics_body->velocity.y = -physics_body->velocity.y; // Invert velocity
+        } else {
+          physics_body->position.y = proposed_position.y;
+        }
+        break;
+      default:
+      case ENTITY_BEHAVIOUR_STATIONARY:
+      break;
+    }
   }
 
   // Update AABB position
