@@ -1,32 +1,28 @@
-CC =
-CFLAGS = -g -O0 -Wall -Wextra -Werror
-LDFLAGS =
-OPERATIN_SYSTEM := $(shell uname -s)
+# Flags and dependencies are provided by nix development shell
 
-# Setup compiler it's flags depending on operating system
-ifeq ($(OPERATIN_SYSTEM),Darwin)
-	CC = clang
-	CFLAGS += -I./vendor/darwin/include
-	LDFLAGS += -L./vendor/darwin/lib -lraylib -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
-else
-	$(error Unsupported operating system)
-endif
-
-TARGET = ./bin/game
-SRC_FILES = level.c vector2.c render.c camera.c window.c entity.c entity_physics.c entity_input.c debug.c main.c
+TARGET = $(TARGET_DIR)/$(TARGET_NAME)
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
 # Default command (since it's first), depends on the game executable
 all: $(TARGET)
 
+# Create bin directory as an order-only prerequisite (won't trigger rebuild)
+ensure_target_dir:
+	mkdir -p $(TARGET_DIR)
+
 # Build the game executable, depends on the object files
-$(TARGET): $(OBJ_FILES)
+$(TARGET): $(OBJ_FILES) | ensure_target_dir
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJ_FILES) -o $(TARGET) 
 
 # Build object files from source files
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 	
-.PHONY: clean
+.PHONY: clean lsp ensure_target_dir
 clean:
 	rm -rf $(OBJ_FILES) $(TARGET)
+
+# Generate compile_commands.json for LSP
+lsp:
+	bear -- make clean all
+
