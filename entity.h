@@ -25,9 +25,8 @@ typedef struct {
 } entity_input_comp_t;
 
 typedef enum {
-  PLAYER = 999,
-  STATIONARY = 0,
-  PATROL = 1
+  ENTITY_BEHAVIOUR_STATIONARY = 0,
+  ENTITY_BEHAVIOUR_PATROL = 1
 } entity_behaviour_t;
 
 typedef enum {
@@ -36,23 +35,22 @@ typedef enum {
 } entity_type_t;
 
 typedef struct {
-  entity_type_t type;
-  Color    color;
-  entity_physics_comp_t physics;
   entity_behaviour_t behaviour;
 } entity_npc_t;
 
 typedef struct {
-  entity_type_t type;
-  Color    color;
-  entity_physics_comp_t physics;
-  entity_behaviour_t behaviour;
   entity_input_comp_t   input;
 } entity_player_t;
 
-typedef union {
-  entity_player_t player;
-  entity_npc_t npc;
+typedef struct {
+  entity_type_t type;
+  entity_physics_comp_t physics;
+  Color    color;
+
+  union {
+    entity_player_t player;
+    entity_npc_t npc;
+  };
 } entity_t;
 
 typedef struct {
@@ -60,11 +58,11 @@ typedef struct {
 } entities_options_t;
 
 typedef struct {
-  entity_player_t player;
-  entity_npc_t    enemies[MAX_ENTITIES - 1];
-  int             enemies_count;
-  entity_t        entities[MAX_ENTITIES];
-  int             entities_count;
+  entity_t player;
+  entity_t enemies[MAX_ENTITIES - 1];
+  int      enemies_count;
+  entity_t entities[MAX_ENTITIES];
+  int      entities_count;
 } entities_t;
 
 

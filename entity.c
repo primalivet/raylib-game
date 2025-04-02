@@ -49,8 +49,9 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     int behaviour = atoi(token);
 
     // HINT: Player entity has to come first in entity file
-    if (behaviour == PLAYER) {
-      entity_player_t entity = {0};
+    if (i == 0) {
+      entity_t entity = {0};
+      entity.type = (entity_type_t)ENTITY_TYPE_PLAYER;
       entity.physics.position = (vector2_t){ .x = position_x, .y = position_y };
       entity.physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
       entity.physics.direction              = (vector2_t){ .x = 0.0f, .y  = 0.0f };
@@ -59,17 +60,16 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity.physics.reset_dir_frames_delay = 6;
       entity.physics.aabb =  (Rectangle){ .x = position_x, .y = position_y, 
                                           .width = width,  .height = height };
-      entity.type = ENTITY_TYPE_PLAYER;
       entity.color = RED;
-      entity.input.up = false;
-      entity.input.down = false;
-      entity.input.left = false;
-      entity.input.right = false;
-      entity.behaviour = (entity_behaviour_t)behaviour;
+      entity.player.input.up = false;
+      entity.player.input.down = false;
+      entity.player.input.left = false;
+      entity.player.input.right = false;
       entities->player = entity;
       entities->entities[i++] = (entity_t)entity;
     } else {
-      entity_npc_t entity = {0};
+      entity_t entity = {0};
+      entity.type = (entity_type_t)ENTITY_TYPE_NPC;
       entity.physics.position = (vector2_t){ .x = position_x, .y = position_y };
       entity.physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
       entity.physics.direction              = (vector2_t){ .x = 0.0f, .y  = 0.0f };
@@ -78,11 +78,10 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity.physics.reset_dir_frames_delay = 6;
       entity.physics.aabb =  (Rectangle){ .x = position_x, .y = position_y, 
                                           .width = width,  .height = height };
-      entity.type = ENTITY_TYPE_PLAYER;
       entity.color = RED;
       entity.type = ENTITY_TYPE_NPC;
       entity.color = YELLOW;
-      entity.behaviour = (entity_behaviour_t)behaviour;
+      entity.npc.behaviour = (entity_behaviour_t)behaviour;
       entities->enemies[i++] = entity;
       entities->entities[i++] = (entity_t)entity;
     }
@@ -100,7 +99,7 @@ void entities_init(entities_t *entities, entities_options_t *entities_options) {
 }
 
 void entities_draw(entities_t *entities) {
-  entity_player_t player = entities->player;
+  entity_t player = entities->player;
 
   DrawRectangleLinesEx(player.physics.aabb, 1, player.color);
 
@@ -112,7 +111,7 @@ void entities_draw(entities_t *entities) {
   DrawLineV(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), player.color);
 
   for (int i = 0; i < entities->enemies_count; i++) {
-    entity_npc_t *enemy = &entities->enemies[i];
+    entity_t *enemy = &entities->enemies[i];
     DrawRectangleLinesEx(enemy->physics.aabb, 1, enemy->color);
   }
 }

@@ -2,7 +2,7 @@
 #include <raylib.h>
 #include <stdio.h>
 
-void debug_draw(entity_player_t *player) {
+void debug_draw(entities_t *entities) {
     // This function should be called after EndMode2D() to draw on top of the world
     
     // Define the debug box dimensions and position (screen space, not world space)
@@ -21,31 +21,31 @@ void debug_draw(entity_player_t *player) {
     
     // Display player position with reduced font size
     sprintf(debugText, "Pos: X=%.1f Y=%.1f", 
-            player->physics.position.x, player->physics.position.y);
+            entities->player.physics.position.x, entities->player.physics.position.y);
     DrawText(debugText, debugBox.x + 10, y, 10, WHITE);
     y += lineHeight;
     
     // Display player velocity with reduced font size
     sprintf(debugText, "Vel: X=%.1f Y=%.1f", 
-            player->physics.velocity.x, player->physics.velocity.y);
+            entities->player.physics.velocity.x, entities->player.physics.velocity.y);
     DrawText(debugText, debugBox.x + 10, y, 10, WHITE);
     y += lineHeight;
     
     // Display player direction with reduced font size
     sprintf(debugText, "Dir: X=%.1f Y=%.1f", 
-            player->physics.direction.x, player->physics.direction.y);
+            entities->player.physics.direction.x, entities->player.physics.direction.y);
     DrawText(debugText, debugBox.x + 10, y, 10, WHITE);
     y += lineHeight;
     
     // Display player speed and friction with reduced font size
     sprintf(debugText, "Speed: %.1f  Friction: %.1f", 
-            player->physics.speed, player->physics.friction);
+            entities->player.physics.speed, entities->player.physics.friction);
     DrawText(debugText, debugBox.x + 10, y, 10, WHITE);
     y += lineHeight;
     
     // Display AABB dimensions
     sprintf(debugText, "AABB: X=%.1f Y=%.1f W=%.1f H=%.1f", 
-            player->physics.aabb.x, player->physics.aabb.y,
-            player->physics.aabb.width, player->physics.aabb.height);
+            entities->player.physics.aabb.x, entities->player.physics.aabb.y,
+            entities->player.physics.aabb.width, entities->player.physics.aabb.height);
     DrawText(debugText, debugBox.x + 10, y, 10, WHITE);
 }

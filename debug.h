@@ -3,6 +3,6 @@
 #include "level.h"
 #include "entity.h"
 
-void debug_draw(entity_player_t *player);
+void debug_draw(entities_t *entities);
 
 #endif

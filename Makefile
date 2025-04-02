@@ -13,8 +13,7 @@ else
 endif
 
 TARGET = ./bin/game
-# SRC_FILES = vector2.c prio_queue.c a_star.c dynlist.c level.c physics.c entity.c camera.c main.c 
-SRC_FILES = level.c vector2.c render.c camera.c window.c entity.c entity_physics.c entity_input.c main.c
+SRC_FILES = level.c vector2.c render.c camera.c window.c entity.c entity_physics.c entity_input.c debug.c main.c
 OBJ_FILES = $(SRC_FILES:.c=.o)
 
 # Default command (since it's first), depends on the game executable
