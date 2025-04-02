@@ -45,9 +45,11 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     float speed = atof(token);
     token = strtok(NULL, " \n");
     float friction = atof(token);
+    token = strtok(NULL, " \n");
+    int behaviour = atoi(token);
 
     // HINT: Player entity has to come first in entity file
-    if (i == 0) {
+    if (behaviour == PLAYER) {
       entity_player_t entity = {0};
       entity.physics.position = (vector2_t){ .x = position_x, .y = position_y };
       entity.physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
@@ -63,6 +65,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity.input.down = false;
       entity.input.left = false;
       entity.input.right = false;
+      entity.behaviour = (entity_behaviour_t)behaviour;
       entities->player = entity;
       entities->entities[i++] = (entity_t)entity;
     } else {
@@ -79,6 +82,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity.color = RED;
       entity.type = ENTITY_TYPE_NPC;
       entity.color = YELLOW;
+      entity.behaviour = (entity_behaviour_t)behaviour;
       entities->enemies[i++] = entity;
       entities->entities[i++] = (entity_t)entity;
     }

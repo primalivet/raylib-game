@@ -24,6 +24,11 @@ typedef struct {
   bool right;
 } entity_input_comp_t;
 
+typedef enum {
+  PLAYER = 999,
+  STATIONARY = 0,
+  PATROL = 1
+} entity_behaviour_t;
 
 typedef enum {
   ENTITY_TYPE_PLAYER,
@@ -34,12 +39,14 @@ typedef struct {
   entity_type_t type;
   Color    color;
   entity_physics_comp_t physics;
+  entity_behaviour_t behaviour;
 } entity_npc_t;
 
 typedef struct {
   entity_type_t type;
   Color    color;
   entity_physics_comp_t physics;
+  entity_behaviour_t behaviour;
   entity_input_comp_t   input;
 } entity_player_t;
 

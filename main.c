@@ -51,7 +51,7 @@ int main() {
   while (!WindowShouldClose()) {
     input_update(&entities.player.input);
     physics_update(&entities.player.physics, &level, &entities.player.input);
-    /*for (int i = 0; i < entities.enemies_count; i++) physics_update(&entities.enemies[i].physics, &level, NULL);*/
+    for (int i = 0; i < entities.enemies_count; i++) physics_update(&entities.enemies[i].physics, &level, NULL);
     camera_update(&camera, &entities.player.physics.position);
 
     render_begin();
