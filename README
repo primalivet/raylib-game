@@ -5,15 +5,14 @@ PLATFORMS
 
 Currently only supporting Darwin/MacOS.
 
+DEPENDENCIES
+
+Are handled by Nix, with the flake.nix file. It is responsible for dependencies as well as environment variables needed for compilation.
+
 COMPILING
 
-The Makefile should be clear by itself (if familiar with make). The only third party library that is used is raylib and that is included in the vendor directory.
-
-RUN THE GAME
-
-After successfully compiling the game it should be just ./bin/game to run the game executable.
+Build with regular GNU Make with `make` or into the nix store with `nix build`. Either way you get the executable `bin/game`.
 
 LSP
 
-To use the clangd language server you need to create a compile_commands.json file. One way to create that file is to run make thorugh another program called bear, with "bear -- make". The bear program can be installed with Homebrew using "brew install bear".
-
+This project assume Clang as the compiler (atleast from LSP point of view) and the command `make lsp` generates a `compile_commands.json` file for the LSP to use.
