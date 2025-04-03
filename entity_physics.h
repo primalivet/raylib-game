@@ -5,5 +5,6 @@
 #ifndef ENTITY_PHYSICS_H
 #define ENTITY_PHYSICS_H
 
-void physics_update(entity_t *entity, level_t *level);
+void physics_update(entities_t *entities, level_t *level);
 #endif
+

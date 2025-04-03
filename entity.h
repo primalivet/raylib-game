@@ -58,15 +58,16 @@ typedef struct {
 } entities_options_t;
 
 typedef struct {
-  entity_t player;
-  entity_t enemies[MAX_ENTITIES - 1];
+  entity_t *player;
+  entity_t *enemies[MAX_ENTITIES - 1];
   int      enemies_count;
-  entity_t entities[MAX_ENTITIES];
+  entity_t *entities[MAX_ENTITIES];
   int      entities_count;
 } entities_t;
 
 
 void entities_init(entities_t *entities, entities_options_t *entities_options);
 void entities_draw(entities_t *entities);
+void entities_free(entities_t *entities);
 
 #endif

@@ -31,7 +31,7 @@ int main() {
 
   camera_t camera = {0};
   camera_options_t camera_options = {0};
-  camera_options.target           = entities.player.physics.position;
+  camera_options.target           = entities.player->physics.position;
   camera_options.offset           = screen_center;
   camera_options.zoom             = 2.0f;
   camera_init(&camera, &camera_options);
@@ -49,11 +49,9 @@ int main() {
   level_init(&level, &level_options);
   
   while (!WindowShouldClose()) {
-    input_update(&entities.player.player.input);
-    physics_update(&entities.player, &level);
-    for (int i = 0; i < entities.enemies_count; i++) physics_update(&entities.enemies[i], &level);
-    camera_update(&camera, &entities.player.physics.position);
-
+    input_update(&entities.player->player.input);
+    physics_update(&entities, &level);
+    camera_update(&camera, &entities.player->physics.position);
     render_begin();
     camera_start(&camera);
 
@@ -65,7 +63,7 @@ int main() {
     render_end();
   }
 
-  /*physics_free(&physics);*/
+  entities_free(&entities);
   level_free(&level);
   window_close();
 }
