@@ -178,7 +178,31 @@ void physics_update(entities_t *entities, level_t *level) {
     if (entity->id == 0) {
       TraceLog(LOG_WARNING, "Collision Entity X: %d, Y: %d", collision_entity_x, collision_entity_y);
     }
+
+    // TODO: Move separation force collision response to own function
+    float seperation_force = 1.5f;
+    if (collision_entity_x) {
+      entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
+      if (entity->physics.proposed_position.x > entity->physics.position.x) {
+        // proposed position is to the right of the current position, so move left
+        entity->physics.proposed_position.x = entity->physics.position.x - seperation_force;
+      } else {
+        // proposed position is to the left of the current position, so move right
+        entity->physics.proposed_position.x = entity->physics.position.x + seperation_force;
+      }
+    }
+    if (collision_entity_y) {
+      entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
+      if (entity->physics.proposed_position.y > entity->physics.position.y) {
+        // proposed position is below the current position, so move up
+        entity->physics.proposed_position.y = entity->physics.position.y - seperation_force;
+      } else {
+        // proposed position is above the current position, so move down
+        entity->physics.proposed_position.y = entity->physics.position.y + seperation_force;
+      }
+    }
   }
+
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
     entity->physics.position = entity->physics.proposed_position; // Update position
