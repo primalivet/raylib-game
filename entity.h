@@ -7,6 +7,7 @@
 typedef struct entity_physics_comp_t {
   int       entity_id;
   vector2_t position;
+  vector2_t proposed_position;
   vector2_t direction;
   vector2_t velocity;
   float     speed;
@@ -41,6 +42,7 @@ typedef struct entity_player_t {
 } entity_player_t;
 
 typedef struct entity_t {
+  int id;
   entity_type_t type;
   entity_physics_comp_t physics;
   Color    color;

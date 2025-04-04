@@ -56,36 +56,38 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     }
     // HINT: Player entity has to come first in entity file
     if (entities_count == 0) {
-      entity->type = (entity_type_t)ENTITY_TYPE_PLAYER;
-      entity->physics.position = (vector2_t){ .x = position_x, .y = position_y };
+      entity->id                             = entities_count;
+      entity->type                           = (entity_type_t)ENTITY_TYPE_PLAYER;
+      entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
+      entity->physics.proposed_position      = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
       entity->physics.direction              = (vector2_t){ .x = 0.0f, .y  = 0.0f };
       entity->physics.friction               = friction;
       entity->physics.speed                  = speed;
       entity->physics.reset_dir_frames_delay = 6;
-      entity->physics.aabb =  (Rectangle){ .x = position_x, .y = position_y, 
-                                          .width = width,  .height = height };
-      entity->color = RED;
-      entity->player.input.up = false;
-      entity->player.input.down = false;
-      entity->player.input.left = false;
-      entity->player.input.right = false;
-      entities->player = entity;
+      entity->physics.aabb                   =  (Rectangle){ .x = position_x, .y = position_y, .width = width,  .height = height };
+      entity->color                          = RED;
+      entity->player.input.up                = false;
+      entity->player.input.down              = false;
+      entity->player.input.left              = false;
+      entity->player.input.right             = false;
+      entities->player                       = entity;
     } else {
-      entity->type = (entity_type_t)ENTITY_TYPE_NPC;
-      entity->physics.position = (vector2_t){ .x = position_x, .y = position_y };
+      entity->id                             = entities_count;
+      entity->type                           = (entity_type_t)ENTITY_TYPE_NPC;
+      entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
+      entity->physics.proposed_position      = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
       entity->physics.direction              = (vector2_t){ .x = 0.0f, .y  = 0.0f };
       entity->physics.friction               = friction;
       entity->physics.speed                  = speed;
       entity->physics.reset_dir_frames_delay = 6;
-      entity->physics.aabb =  (Rectangle){ .x = position_x, .y = position_y, 
-                                          .width = width,  .height = height };
-      entity->color = RED;
-      entity->type = ENTITY_TYPE_NPC;
-      entity->color = YELLOW;
-      entity->npc.behaviour = (entity_behaviour_t)behaviour;
-      entities->enemies[enemies_count] = entity;
+      entity->physics.aabb                   = (Rectangle){ .x = position_x, .y = position_y, .width = width,  .height = height };
+      entity->color                          = RED;
+      entity->type                           = ENTITY_TYPE_NPC;
+      entity->color                          = YELLOW;
+      entity->npc.behaviour                  = (entity_behaviour_t)behaviour;
+      entities->enemies[enemies_count]       = entity;
 
       enemies_count++;
     }
