@@ -18,66 +18,65 @@ void physics_update(entities_t *entities, level_t *level) {
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
-    entity_physics_comp_t *physics_body = &entity->physics;
 
     // Apply direction from input
     if (entity->type == ENTITY_TYPE_PLAYER) {
       entity_input_comp_t *input = &entity->player.input;
 
       if (input != NULL) {
-        physics_body->direction.x = 0.0f;
-        physics_body->direction.y = 0.0f;
+        entity->physics.direction.x = 0.0f;
+        entity->physics.direction.y = 0.0f;
 
-        if (input->up)    physics_body->direction.y -= 1.0f;
-        if (input->down)  physics_body->direction.y += 1.0f;
-        if (input->left)  physics_body->direction.x -= 1.0f;
-        if (input->right) physics_body->direction.x += 1.0f;
+        if (input->up)    entity->physics.direction.y -= 1.0f;
+        if (input->down)  entity->physics.direction.y += 1.0f;
+        if (input->left)  entity->physics.direction.x -= 1.0f;
+        if (input->right) entity->physics.direction.x += 1.0f;
       }
     } else {
       switch(entity->npc.behaviour) {
         case ENTITY_BEHAVIOUR_PATROL: 
           // TODO: update to more complex behaviour
-          if (physics_body->direction.x == 0.0f && physics_body->direction.y == 0.0f) {
+          if (entity->physics.direction.x == 0.0f && entity->physics.direction.y == 0.0f) {
             int random_x = rand() % 2;
             int random_y = rand() % 2;
-            physics_body->direction.x = (float)random_x;
-            physics_body->direction.y = (float)random_y;
+            entity->physics.direction.x = (float)random_x;
+            entity->physics.direction.y = (float)random_y;
           }
           break;
         default:
         case ENTITY_BEHAVIOUR_STATIONARY:
-          physics_body->direction.x = 0.0f;
-          physics_body->direction.y = 0.0f;
+          entity->physics.direction.x = 0.0f;
+          entity->physics.direction.y = 0.0f;
           break;
       }
     }
 
     // Normalize direction
-    float length = sqrt(physics_body->direction.x * physics_body->direction.x + physics_body->direction.y * physics_body->direction.y);
+    float length = sqrt(entity->physics.direction.x * entity->physics.direction.x + entity->physics.direction.y * entity->physics.direction.y);
     if (length != 0.0f) {
-      physics_body->direction.x /= length;
-      physics_body->direction.y /= length;
+      entity->physics.direction.x /= length;
+      entity->physics.direction.y /= length;
     }
 
     // Apply friction (down to but not under 0.0f, prevent sliding)
-    if      (physics_body->velocity.y < 0.0f) physics_body->velocity.y = fmin(physics_body->velocity.y + physics_body->friction, 0.0f);
-    else if (physics_body->velocity.y > 0.0f) physics_body->velocity.y = fmax(physics_body->velocity.y - physics_body->friction, 0.0f);
-    if      (physics_body->velocity.x < 0.0f) physics_body->velocity.x = fmin(physics_body->velocity.x + physics_body->friction, 0.0f);
-    else if (physics_body->velocity.x > 0.0f) physics_body->velocity.x = fmax(physics_body->velocity.x - physics_body->friction, 0.0f);
+    if      (entity->physics.velocity.y < 0.0f) entity->physics.velocity.y = fmin(entity->physics.velocity.y + entity->physics.friction, 0.0f);
+    else if (entity->physics.velocity.y > 0.0f) entity->physics.velocity.y = fmax(entity->physics.velocity.y - entity->physics.friction, 0.0f);
+    if      (entity->physics.velocity.x < 0.0f) entity->physics.velocity.x = fmin(entity->physics.velocity.x + entity->physics.friction, 0.0f);
+    else if (entity->physics.velocity.x > 0.0f) entity->physics.velocity.x = fmax(entity->physics.velocity.x - entity->physics.friction, 0.0f);
 
     // Apply direction and speed to velocity
-    physics_body->velocity.x += physics_body->direction.x * physics_body->speed;
-    physics_body->velocity.y += physics_body->direction.y * physics_body->speed;
+    entity->physics.velocity.x += entity->physics.direction.x * entity->physics.speed;
+    entity->physics.velocity.y += entity->physics.direction.y * entity->physics.speed;
 
     // Clamp velocity
     float max_velocity = 2.0f; // Example maximum velocity (should be set on the physics_body?)
-    if (physics_body->velocity.x > max_velocity) physics_body->velocity.x = max_velocity;
-    if (physics_body->velocity.x < -max_velocity) physics_body->velocity.x = -max_velocity;
-    if (physics_body->velocity.y > max_velocity) physics_body->velocity.y = max_velocity;
-    if (physics_body->velocity.y < -max_velocity) physics_body->velocity.y = -max_velocity;
+    if (entity->physics.velocity.x > max_velocity) entity->physics.velocity.x = max_velocity;
+    if (entity->physics.velocity.x < -max_velocity) entity->physics.velocity.x = -max_velocity;
+    if (entity->physics.velocity.y > max_velocity) entity->physics.velocity.y = max_velocity;
+    if (entity->physics.velocity.y < -max_velocity) entity->physics.velocity.y = -max_velocity;
 
-    entity->physics.proposed_position = (vector2_t){ .x = physics_body->position.x + physics_body->velocity.x, 
-                                                     .y = physics_body->position.y + physics_body->velocity.y };
+    entity->physics.proposed_position = (vector2_t){ .x = entity->physics.position.x + entity->physics.velocity.x, 
+                                                     .y = entity->physics.position.y + entity->physics.velocity.y };
 
   }
 
