@@ -128,15 +128,13 @@ void physics_update(entities_t *entities, level_t *level) {
     if (entity->type == ENTITY_TYPE_PLAYER) {
       if (collision_world_x) {
         entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
-      } else {
-        entity->physics.position.x = entity->physics.proposed_position.x;
-      }
+        entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+      } 
 
       if (collision_world_y) {
         entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
-      } else {
-        entity->physics.position.y = entity->physics.proposed_position.y;
-      }
+        entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+      } 
     } else {
       switch(entity->npc.behaviour) {
         case ENTITY_BEHAVIOUR_PATROL: 
@@ -144,15 +142,13 @@ void physics_update(entities_t *entities, level_t *level) {
           if (collision_world_x) {
             entity->physics.direction.x = -entity->physics.direction.x; // Invert direction
             entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
-          } else {
-            entity->physics.position.x = entity->physics.proposed_position.x;
-          }
+            entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+          } 
           if (collision_world_y) {
             entity->physics.direction.y = -entity->physics.direction.y; // Invert direction
             entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
-          } else {
-            entity->physics.position.y = entity->physics.proposed_position.y;
-          }
+            entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+          } 
           break;
         default:
         case ENTITY_BEHAVIOUR_STATIONARY:
@@ -182,11 +178,12 @@ void physics_update(entities_t *entities, level_t *level) {
     if (entity->id == 0) {
       TraceLog(LOG_WARNING, "Collision Entity X: %d, Y: %d", collision_entity_x, collision_entity_y);
     }
-
-
-    // Update AABB position
-    entity->physics.aabb.x = entity->physics.position.x;
-    entity->physics.aabb.y = entity->physics.position.y;
+  }
+  for (int i = 0; i < entities->entities_count; i++) {
+    entity_t *entity = entities->entities[i];
+    entity->physics.position = entity->physics.proposed_position; // Update position
+    entity->physics.aabb.x = entity->physics.proposed_position.x; // Update AABB x
+    entity->physics.aabb.y = entity->physics.proposed_position.y; // Update AABB y
   }
 }
 
