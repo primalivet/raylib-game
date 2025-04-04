@@ -163,7 +163,6 @@ void physics_update(entities_t *entities, level_t *level) {
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
-    entity_physics_comp_t *physics_body = &entity->physics;
 
     // Entities collision response
     bool collision_entity_x = false;
@@ -186,8 +185,8 @@ void physics_update(entities_t *entities, level_t *level) {
 
 
     // Update AABB position
-    physics_body->aabb.x = physics_body->position.x;
-    physics_body->aabb.y = physics_body->position.y;
+    entity->physics.aabb.x = entity->physics.position.x;
+    entity->physics.aabb.y = entity->physics.position.y;
   }
 }
 
