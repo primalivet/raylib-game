@@ -1,17 +1,16 @@
-#include <raylib.h>
-#include "vector2.h"
-
 #ifndef CAMERA_H
 #define CAMERA_H
 
-typedef struct {
+#include "vector2.h"
+
+typedef struct camera_t {
   vector2_t offset;
   vector2_t target;
   float     rotation;
   float     zoom; 
 } camera_t;
 
-typedef struct {
+typedef struct camera_options_t {
   vector2_t offset;
   vector2_t target;
   float     zoom; 

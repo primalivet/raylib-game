@@ -1,14 +1,14 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-typedef struct {
+typedef struct window_options_t {
   int         width;
   int         height;
   int         taget_fps;
   const char *title;
 } window_options_t;
 
-typedef struct {
+typedef struct window_t {
   int width;
   int height;
 } window_t;

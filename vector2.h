@@ -1,9 +1,9 @@
-#include <raylib.h>
-
 #ifndef VECTOR2_H
 #define VECTOR2_H
 
-typedef struct {
+#include <raylib.h>
+
+typedef struct vector2_t {
   float x;
   float y;
 } vector2_t;
