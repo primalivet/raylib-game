@@ -8,6 +8,7 @@
 #include "entity.h"
 #include "entity_input.h"
 #include "entity_physics.h"
+#include "entity_animation.h"
 #include "debug.h"
 
 #define SCREEN_WIDTH 800
@@ -51,11 +52,13 @@ int main() {
   while (!WindowShouldClose()) {
     input_update(&entities.player->player.input);
     physics_update(&entities, &level);
+    animation_update(entities.player);
     camera_update(&camera, &entities.player->physics.position);
     render_begin();
     camera_start(&camera);
 
     level_draw(&level);
+    animation_draw(entities.player);
     entities_draw(&entities);
 
     camera_end();

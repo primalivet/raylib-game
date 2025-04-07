@@ -1,8 +1,19 @@
 #ifndef ENTITY_H
 #define ENTITY_H
+#include <raylib.h>
 #include "vector2.h"
 
 #define MAX_ENTITIES 10
+
+typedef struct entity_animation_t {
+  Texture2D texture;
+  int tile_size;
+  int frame_count;
+  int frame_current;
+  int frame_counter;
+  int frames_per_update;
+  Rectangle current_clip;
+} entity_animation_t;
 
 typedef struct entity_physics_comp_t {
   int       entity_id;
@@ -39,6 +50,7 @@ typedef struct entity_npc_t {
 
 typedef struct entity_player_t {
   entity_input_comp_t   input;
+  entity_animation_t animation;
 } entity_player_t;
 
 typedef struct entity_t {

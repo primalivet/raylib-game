@@ -18,6 +18,19 @@ static bool is_comment_line(const char *line) {
   return false;
 }
 
+void entity_load_player_animation(entity_t *entity) {
+  entity->player.animation.texture = LoadTexture("resources/player.png");
+  entity->player.animation.tile_size = 16;
+  entity->player.animation.frame_count = 4;
+  entity->player.animation.frame_counter = 0;
+  entity->player.animation.frame_current = 0;
+  entity->player.animation.frames_per_update = 10;
+  entity->player.animation.current_clip = (Rectangle){ .x = 0, 
+                                                       .y = 0, 
+                                                       .width = 16, 
+                                                       .height = 16 };
+}
+
 void entities_load(entities_t *entities, entities_options_t *entities_options) {
   FILE *entities_file = fopen(entities_options->entities_path, "r");
   if (entities_file == NULL) {
@@ -120,6 +133,7 @@ void entities_init(entities_t *entities, entities_options_t *entities_options) {
   entities->enemies_count = 0;
   entities->entities_count = 0;
   entities_load(entities, entities_options);
+  entity_load_player_animation(entities->player);
 }
 
 void entities_draw(entities_t *entities) {
