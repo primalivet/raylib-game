@@ -175,8 +175,8 @@ void physics_update(entities_t *entities, level_t *level) {
       collision_entity_y = collision_entity_y || physics_intersect_rects(proposed_aabb_y, other_entity->physics.aabb);
     }
 
-    if (entity->id == 0) {
-      TraceLog(LOG_WARNING, "Collision Entity X: %d, Y: %d", collision_entity_x, collision_entity_y);
+    if (collision_entity_x || collision_entity_y) {
+      entity->health -= 2;
     }
 
     // TODO: Move separation force collision response to own function

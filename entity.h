@@ -43,6 +43,7 @@ typedef struct entity_player_t {
 
 typedef struct entity_t {
   int id;
+  int health;
   entity_type_t type;
   entity_physics_comp_t physics;
   Color    color;

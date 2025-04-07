@@ -48,4 +48,8 @@ void debug_draw(entities_t *entities) {
             entities->player->physics.aabb.x, entities->player->physics.aabb.y,
             entities->player->physics.aabb.width, entities->player->physics.aabb.height);
     DrawText(debugText, debugBox.x + 10, y, 10, WHITE);
+
+    // Display player health
+    sprintf(debugText, "Health: %d", entities->player->health);
+    DrawText(debugText, debugBox.x + 10, y + lineHeight, 10, WHITE);
 }

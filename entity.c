@@ -48,6 +48,8 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     float friction = atof(token);
     token = strtok(NULL, " \n");
     int behaviour = atoi(token);
+    token = strtok(NULL, " \n");
+    int health = atoi(token);
 
     entity_t * entity = malloc(sizeof(entity_t));
     if (entity == NULL) {
@@ -57,6 +59,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     // HINT: Player entity has to come first in entity file
     if (entities_count == 0) {
       entity->id                             = entities_count;
+      entity->health                         = health;
       entity->type                           = (entity_type_t)ENTITY_TYPE_PLAYER;
       entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.proposed_position      = (vector2_t){ .x = position_x, .y = position_y };
@@ -74,6 +77,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entities->player                       = entity;
     } else {
       entity->id                             = entities_count;
+      entity->health                         = health;
       entity->type                           = (entity_type_t)ENTITY_TYPE_NPC;
       entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.proposed_position      = (vector2_t){ .x = position_x, .y = position_y };
