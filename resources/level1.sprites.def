@@ -1,7 +1,0 @@
-
-#id  filename     name        size  duration  count  start
-1    player.png  idle        16    4.0       4      0,0
-2    player.png  walk_left   16    3.0       4      0,4
-3    player.png  walk_right  16    3.0       4      0,8
-4    player.png  walk_up     16    6.0       4      1,0
-4    player.png  walk_down   16    6.0       4      1,4

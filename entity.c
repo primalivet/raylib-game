@@ -24,6 +24,7 @@ void entity_load_player_animation(entity_t *entity) {
   entity->player.animation.frame_count = 4;
   entity->player.animation.frame_counter = 0;
   entity->player.animation.frame_current = 0;
+  entity->player.animation.frame_row = 1;
   entity->player.animation.frames_per_update = 10;
   entity->player.animation.current_clip = (Rectangle){ .x = 0, 
                                                        .y = 0, 

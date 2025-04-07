@@ -11,8 +11,8 @@
 #include "entity_animation.h"
 #include "debug.h"
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
 
 int main() {
   window_t window = {0};
@@ -34,7 +34,7 @@ int main() {
   camera_options_t camera_options = {0};
   camera_options.target           = entities.player->physics.position;
   camera_options.offset           = screen_center;
-  camera_options.zoom             = 2.0f;
+  camera_options.zoom             = 4.0f;
   camera_init(&camera, &camera_options);
 
   level_t level = {0};

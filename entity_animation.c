@@ -7,16 +7,16 @@ void animation_update(entity_t *entity) {
   if (entity->type != ENTITY_TYPE_PLAYER) return;
 
   bool is_moving = vector2_magnitude(entity->physics.velocity) > 0.0f;
+  bool has_direction = vector2_magnitude(entity->physics.direction) > 0.0f;
 
-  int animation_row = 1;
-  if (is_moving) {
+  if (is_moving && has_direction) {
     vector2_t direction = entity->physics.direction;
     if (fabs(direction.x) > fabs(direction.y)) {
-      if (direction.x > 0) animation_row = 3;
-      else animation_row = 2;
+      if (direction.x > 0) entity->player.animation.frame_row = 3;
+      else entity->player.animation.frame_row = 2;
     } else {
-      if (direction.y > 0) animation_row = 1;
-      else animation_row = 0;
+      if (direction.y > 0) entity->player.animation.frame_row = 1;
+      else entity->player.animation.frame_row = 0;
     }
     entity->player.animation.frame_counter++;
     if (entity->player.animation.frame_counter >= entity->player.animation.frames_per_update) {
@@ -29,7 +29,7 @@ void animation_update(entity_t *entity) {
 
   entity->player.animation.current_clip = (Rectangle) {
     .x = entity->player.animation.frame_current * entity->player.animation.tile_size,
-    .y = animation_row * entity->player.animation.tile_size,
+    .y = entity->player.animation.frame_row * entity->player.animation.tile_size,
     .width = entity->player.animation.tile_size,
     .height = entity->player.animation.tile_size
   };

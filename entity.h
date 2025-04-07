@@ -11,6 +11,7 @@ typedef struct entity_animation_t {
   int frame_count;
   int frame_current;
   int frame_counter;
+  int frame_row;
   int frames_per_update;
   Rectangle current_clip;
 } entity_animation_t;
