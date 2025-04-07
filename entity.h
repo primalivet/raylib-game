@@ -80,7 +80,7 @@ typedef struct entities_t {
 
 
 void entities_init(entities_t *entities, entities_options_t *entities_options);
-void entities_draw(entities_t *entities);
+void entities_draw(entities_t *entities, bool show_debug);
 void entities_free(entities_t *entities);
 
 #endif

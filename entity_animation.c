@@ -28,10 +28,10 @@ void animation_update(entity_t *entity) {
   }
 
   entity->player.animation.current_clip = (Rectangle) {
-    .x = entity->player.animation.frame_current * 16,
-    .y = animation_row * 16,
-    .width = 16,
-    .height = 16
+    .x = entity->player.animation.frame_current * entity->player.animation.tile_size,
+    .y = animation_row * entity->player.animation.tile_size,
+    .width = entity->player.animation.tile_size,
+    .height = entity->player.animation.tile_size
   };
 }
 
@@ -40,6 +40,11 @@ void animation_draw(entity_t *entity) {
   if (entity->type != ENTITY_TYPE_PLAYER) return;
 
   Rectangle source = entity->player.animation.current_clip;
-  Rectangle dest = entity->physics.aabb;
+  Rectangle dest = {
+    .x = entity->physics.position.x - ((entity->player.animation.tile_size - entity->physics.aabb.width) / 2),
+    .y = entity->physics.position.y - ((entity->player.animation.tile_size - entity->physics.aabb.height) / 2),
+    .width = entity->player.animation.tile_size,
+    .height = entity->player.animation.tile_size
+  };
   DrawTexturePro(entity->player.animation.texture, source, dest, (Vector2){0, 0}, 0.0f, WHITE);
 }

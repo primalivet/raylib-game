@@ -49,7 +49,11 @@ int main() {
   level_options.tilemap_path          = "resources/level1.tilemap.def";
   level_init(&level, &level_options);
   
+  bool show_debug = false;
   while (!WindowShouldClose()) {
+    if (IsKeyPressed(KEY_Q)) {
+      show_debug = !show_debug;
+    }
     input_update(&entities.player->player.input);
     physics_update(&entities, &level);
     animation_update(entities.player);
@@ -59,10 +63,10 @@ int main() {
 
     level_draw(&level);
     animation_draw(entities.player);
-    entities_draw(&entities);
+    entities_draw(&entities, show_debug);
 
     camera_end();
-    debug_draw(&entities);
+    debug_draw(&entities, show_debug);
     render_end();
   }
 

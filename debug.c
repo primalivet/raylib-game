@@ -2,7 +2,8 @@
 #include <raylib.h>
 #include <stdio.h>
 
-void debug_draw(entities_t *entities) {
+void debug_draw(entities_t *entities, bool show_debug) {
+    if (!show_debug) return;
     // This function should be called after EndMode2D() to draw on top of the world
     
     // Define the debug box dimensions and position (screen space, not world space)

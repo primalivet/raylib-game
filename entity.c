@@ -136,17 +136,19 @@ void entities_init(entities_t *entities, entities_options_t *entities_options) {
   entity_load_player_animation(entities->player);
 }
 
-void entities_draw(entities_t *entities) {
+void entities_draw(entities_t *entities, bool show_debug) {
   entity_t *player = entities->player;
 
-  DrawRectangleLinesEx(player->physics.aabb, 1, player->color);
+  if (show_debug) {
+    DrawRectangleLinesEx(player->physics.aabb, 1, player->color);
+    vector2_t player_center = (vector2_t){ .x = player->physics.position.x + (player->physics.aabb.width / 2), 
+      .y = player->physics.position.y + (player->physics.aabb.height / 2) };
+    vector2_t player_dir_end = (vector2_t){ .x = player->physics.position.x + (player->physics.aabb.width / 2) + ((player->physics.aabb.width  / 2) * player->physics.direction.x),
+      .y = player->physics.position.y + (player->physics.aabb.height / 2) + ((player->physics.aabb.width / 2) * player->physics.direction.y) };
 
-  vector2_t player_center = (vector2_t){ .x = player->physics.position.x + (player->physics.aabb.width / 2), 
-                                         .y = player->physics.position.y + (player->physics.aabb.height / 2) };
-  vector2_t player_dir_end = (vector2_t){ .x = player->physics.position.x + (player->physics.aabb.width / 2) + ((player->physics.aabb.width  / 2) * player->physics.direction.x),
-                                          .y = player->physics.position.y + (player->physics.aabb.height / 2) + ((player->physics.aabb.width / 2) * player->physics.direction.y) };
-    
-  DrawLineV(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), player->color);
+    DrawLineV(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), player->color);
+  }
+
 
   for (int i = 0; i < entities->enemies_count; i++) {
     entity_t *enemy = entities->enemies[i];
