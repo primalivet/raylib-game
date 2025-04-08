@@ -127,12 +127,12 @@ void physics_update(entities_t *entities, level_t *level) {
     // Collision response
     if (entity->type == ENTITY_TYPE_PLAYER) {
       if (collision_world_x) {
-        entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
+        // entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
         entity->physics.proposed_position.x = entity->physics.position.x; // Reset proposed position X
       } 
 
       if (collision_world_y) {
-        entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
+        // entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
         entity->physics.proposed_position.y = entity->physics.position.y; // Reset proposed position Y
       } 
     } else {
@@ -141,12 +141,12 @@ void physics_update(entities_t *entities, level_t *level) {
           // TODO: update to more complex behaviour
           if (collision_world_x) {
             entity->physics.direction.x = -entity->physics.direction.x; // Invert direction
-            entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
+            // entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
             entity->physics.proposed_position.x = entity->physics.position.x; // Reset proposed position X
           } 
           if (collision_world_y) {
             entity->physics.direction.y = -entity->physics.direction.y; // Invert direction
-            entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
+            // entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
             entity->physics.proposed_position.y = entity->physics.position.y; // Reset proposed position Y
           } 
           break;
@@ -180,25 +180,30 @@ void physics_update(entities_t *entities, level_t *level) {
     }
 
     // TODO: Move separation force collision response to own function
-    float seperation_force = 1.5f;
+    // TODO: Introduce more behaviours and shooting as it will impact collision behaviour
+    // float seperation_force = 1.5f;
     if (collision_entity_x) {
-      entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
+      // entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
       if (entity->physics.proposed_position.x > entity->physics.position.x) {
         // proposed position is to the right of the current position, so move left
-        entity->physics.proposed_position.x = entity->physics.position.x - seperation_force;
+        entity->physics.proposed_position.x = entity->physics.position.x;
+        entity->physics.direction.x = -entity->physics.direction.x;
       } else {
         // proposed position is to the left of the current position, so move right
-        entity->physics.proposed_position.x = entity->physics.position.x + seperation_force;
+        entity->physics.proposed_position.x = entity->physics.position.x ;
+        entity->physics.direction.x = -entity->physics.direction.x;
       }
     }
     if (collision_entity_y) {
-      entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
+      // entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
       if (entity->physics.proposed_position.y > entity->physics.position.y) {
         // proposed position is below the current position, so move up
-        entity->physics.proposed_position.y = entity->physics.position.y - seperation_force;
+        entity->physics.proposed_position.y = entity->physics.position.y ;
+        entity->physics.direction.y = -entity->physics.direction.y;
       } else {
         // proposed position is above the current position, so move down
-        entity->physics.proposed_position.y = entity->physics.position.y + seperation_force;
+        entity->physics.proposed_position.y = entity->physics.position.y ;
+        entity->physics.direction.y = -entity->physics.direction.y;
       }
     }
   }
