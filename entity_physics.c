@@ -128,12 +128,12 @@ void physics_update(entities_t *entities, level_t *level) {
     if (entity->type == ENTITY_TYPE_PLAYER) {
       if (collision_world_x) {
         entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
-        entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+        entity->physics.proposed_position.x = entity->physics.position.x; // Reset proposed position X
       } 
 
       if (collision_world_y) {
         entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
-        entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+        entity->physics.proposed_position.y = entity->physics.position.y; // Reset proposed position Y
       } 
     } else {
       switch(entity->npc.behaviour) {
@@ -142,12 +142,12 @@ void physics_update(entities_t *entities, level_t *level) {
           if (collision_world_x) {
             entity->physics.direction.x = -entity->physics.direction.x; // Invert direction
             entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
-            entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+            entity->physics.proposed_position.x = entity->physics.position.x; // Reset proposed position X
           } 
           if (collision_world_y) {
             entity->physics.direction.y = -entity->physics.direction.y; // Invert direction
             entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
-            entity->physics.proposed_position = entity->physics.position; // Reset proposed position
+            entity->physics.proposed_position.y = entity->physics.position.y; // Reset proposed position Y
           } 
           break;
         default:
