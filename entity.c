@@ -32,6 +32,16 @@ void entity_load_animation(entity_t *entity, const char *texture_path) {
                                                        .height = 16 };
 }
 
+entity_facing_t entity_translate_facing(char *facing) {
+  switch(*facing) {
+    case 'N': return ENTITY_FACING_NORTH;
+    case 'E': return ENTITY_FACING_EAST;
+    case 'W': return ENTITY_FACING_WEST;
+    default:
+    case 'S': return ENTITY_FACING_SOUTH;
+  };
+}
+
 void entities_load(entities_t *entities, entities_options_t *entities_options) {
   FILE *entities_file = fopen(entities_options->entities_path, "r");
   if (entities_file == NULL) {
@@ -48,6 +58,8 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     char *token = NULL;
     token = strtok(entities_buffer, " \n");
     /*char *id = token;*/
+    token = strtok(NULL, " \n");
+    char *facing = token;
     token = strtok(NULL, " \n");
     int position_x = atof(token);
     token = strtok(NULL, " \n");
@@ -75,6 +87,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity->id                             = entities_count;
       entity->health                         = health;
       entity->type                           = (entity_type_t)ENTITY_TYPE_PLAYER;
+      entity->facing                         = entity_translate_facing(facing);
       entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.proposed_position      = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
@@ -93,6 +106,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
       entity->id                             = entities_count;
       entity->health                         = health;
       entity->type                           = (entity_type_t)ENTITY_TYPE_NPC;
+      entity->facing                         = entity_translate_facing(facing);
       entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.proposed_position      = (vector2_t){ .x = position_x, .y = position_y };
       entity->physics.velocity               = (vector2_t){ .x = 0.0f, .y  = 0.0f };
@@ -132,8 +146,23 @@ void entities_init(entities_t *entities, entities_options_t *entities_options) {
   }
 
   for (int i = 0; i < MAX_BULLETS; i++) {
-    entities->bullets[i] = NULL;
+    entity_bullet_t *bullet = malloc(sizeof(entity_bullet_t));
+    if (bullet == NULL) {
+      TraceLog(LOG_FATAL, "ENTITY: Failed to allocate memory for bullet");
+      exit(1);
+      for (int j = 0; j < i; j++) {
+        free(entities->bullets[j]);
+        entities->bullets[j] = NULL;
+      }
+    }
+    bullet->direction = (vector2_t){ .x = 0.0f, .y = 0.0f };
+    bullet->position = (vector2_t){ .x = 0.0f, .y = 0.0f };
+    bullet->velocity = (vector2_t){ .x = 0.0f, .y = 0.0f };
+    bullet->active = false;
+    entities->bullets[i] = bullet;
   }
+
+  entities->bullets_count = MAX_BULLETS;
 
   entities->enemies_count = 0;
   entities->entities_count = 0;

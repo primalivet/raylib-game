@@ -8,7 +8,7 @@
       crossPlatformFlags = ''
         export TARGET_DIR="bin"
         export TARGET_NAME="game"
-        export SRC_FILES="level.c vector2.c render.c camera.c window.c entity.c entity_physics.c entity_input.c entity_animation.c debug.c main.c"
+        export SRC_FILES="level.c vector2.c render.c camera.c window.c entity.c entity_physics.c entity_input.c entity_animation.c entity_bullets.c debug.c main.c"
         export CFLAGS="-g -O0 -Wall -Wextra -Werror $(pkg-config --cflags raylib)"
         export LDFLAGS="$(pkg-config --libs raylib)"
       '';

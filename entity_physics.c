@@ -31,6 +31,11 @@ void physics_update(entities_t *entities, level_t *level) {
         if (input->down)  entity->physics.direction.y += 1.0f;
         if (input->left)  entity->physics.direction.x -= 1.0f;
         if (input->right) entity->physics.direction.x += 1.0f;
+
+        if (input->up)    entity->facing = ENTITY_FACING_NORTH;
+        if (input->down)  entity->facing = ENTITY_FACING_SOUTH;
+        if (input->left)  entity->facing = ENTITY_FACING_WEST;
+        if (input->right) entity->facing = ENTITY_FACING_EAST;
       }
     } else {
       switch(entity->npc.behaviour) {
@@ -213,6 +218,27 @@ void physics_update(entities_t *entities, level_t *level) {
     entity->physics.position = entity->physics.proposed_position; // Update position
     entity->physics.aabb.x = entity->physics.proposed_position.x; // Update AABB x
     entity->physics.aabb.y = entity->physics.proposed_position.y; // Update AABB y
+  }
+
+  for (int i = 0; i < entities->bullets_count; i++) {
+    entity_bullet_t *bullet = entities->bullets[i];
+
+    if (bullet->active == false) continue;
+
+    // Apply direction and speed to velocity
+    bullet->velocity.x += bullet->direction.x * 1.5f;
+    bullet->velocity.y += bullet->direction.y * 1.5f;
+
+    // Clamp velocity
+    float max_velocity = 3.0f; // Example maximum velocity (should be set on the physics_body?)
+    if (bullet->velocity.x > max_velocity) bullet->velocity.x = max_velocity;
+    if (bullet->velocity.x < -max_velocity) bullet->velocity.x = -max_velocity;
+    if (bullet->velocity.y > max_velocity) bullet->velocity.y = max_velocity;
+    if (bullet->velocity.y < -max_velocity) bullet->velocity.y = -max_velocity;
+
+    bullet->position = (vector2_t){ .x = bullet->position.x + bullet->velocity.x, 
+                                    .y = bullet->position.y + bullet->velocity.y };
+
   }
 }
 

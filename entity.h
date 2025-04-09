@@ -34,7 +34,8 @@ typedef struct entity_input_comp_t {
   bool down;
   bool left;
   bool right;
-  bool fire;
+  bool space;
+  bool space_prev;
 } entity_input_comp_t;
 
 typedef enum entity_behaviour_t {
@@ -47,6 +48,13 @@ typedef enum entity_type_t {
   ENTITY_TYPE_NPC,
 } entity_type_t;
 
+typedef enum entity_facing_t {
+  ENTITY_FACING_NORTH,
+  ENTITY_FACING_SOUTH,
+  ENTITY_FACING_EAST,
+  ENTITY_FACING_WEST
+} entity_facing_t;
+
 typedef struct entity_npc_t {
   entity_behaviour_t behaviour;
 } entity_npc_t;
@@ -58,6 +66,7 @@ typedef struct entity_player_t {
 typedef struct entity_t {
   int id;
   int health;
+  entity_facing_t facing;
   entity_animation_t animation;
   entity_type_t type;
   entity_physics_comp_t physics;
@@ -73,6 +82,7 @@ typedef struct entity_bullet_t {
     vector2_t direction;
     vector2_t position;
     vector2_t velocity;
+    bool active;
 } entity_bullet_t;
 
 typedef struct entities_options_t {
@@ -86,7 +96,7 @@ typedef struct entities_t {
   entity_t *entities[MAX_ENTITIES];
   int      entities_count;
   entity_bullet_t *bullets[MAX_BULLETS];
-  int bullets_count;
+  int     bullets_count;
 } entities_t;
 
 

@@ -9,6 +9,7 @@
 #include "entity_input.h"
 #include "entity_physics.h"
 #include "entity_animation.h"
+#include "entity_bullets.h"
 #include "debug.h"
 
 #define SCREEN_WIDTH 1024
@@ -57,12 +58,14 @@ int main() {
     input_update(&entities.player->player.input);
     physics_update(&entities, &level);
     animation_update(&entities);
+    bullets_update(&entities);
     camera_update(&camera, &entities.player->physics.position);
     render_begin();
     camera_start(&camera);
 
     level_draw(&level);
     animation_draw(&entities);
+    bullets_draw(&entities);
 
     camera_end();
     debug_draw(&entities, show_debug);

@@ -23,7 +23,12 @@ void animation_update(entities_t *entities) {
         entity->animation.frame_current = (entity->animation.frame_current + 1) % entity->animation.frame_count;
       }
     } else {
-      entity->animation.frame_current = 0;
+      switch (entity->facing) {
+        case ENTITY_FACING_NORTH: entity->animation.frame_row = 0; break;
+        case ENTITY_FACING_SOUTH: entity->animation.frame_row = 1; break;
+        case ENTITY_FACING_WEST: entity->animation.frame_row = 2; break;
+        case ENTITY_FACING_EAST: entity->animation.frame_row = 3; break;
+      }
     }
 
     entity->animation.current_clip = (Rectangle) {

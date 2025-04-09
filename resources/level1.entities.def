@@ -1,5 +1,5 @@
-#id     start_pos_x  start_pos_y  width  height speed friction behavior health
-player  507          290          10     10     1.0   0.7      _        10
-1       60           60           10     10     1.0   0.8      1        2
-2       130          260          10     10     1.0   0.8      1        2
-2       530          220          10     10     1.0   0.8      1        2
+#id     facing start_pos_x  start_pos_y  width  height speed friction behavior health
+player  W      507          290          10     10     1.0   0.7      _        10
+1       S      60           60           10     10     1.0   0.8      1        2
+2       E      130          260          10     10     1.0   0.8      1        2
+2       W      530          220          10     10     1.0   0.8      1        2
