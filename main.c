@@ -66,9 +66,10 @@ int main() {
     level_draw(&level);
     animation_draw(&entities);
     bullets_draw(&entities);
+    debug_draw_overlay(&entities, show_debug);
 
     camera_end();
-    debug_draw(&entities, show_debug);
+    debug_draw_info(&entities, show_debug);
     render_end();
   }
 

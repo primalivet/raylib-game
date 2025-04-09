@@ -5,6 +5,7 @@
 void animation_update(entities_t *entities) {
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
     bool is_moving = vector2_magnitude(entity->physics.velocity) > 0.0f;
     bool has_direction = vector2_magnitude(entity->physics.direction) > 0.0f;
 
@@ -43,6 +44,7 @@ void animation_update(entities_t *entities) {
 void animation_draw(entities_t *entities) {
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
     Rectangle source = entity->animation.current_clip;
     Rectangle dest = {
       .x = entity->physics.position.x - ((entity->animation.tile_size - entity->physics.aabb.width) / 2),

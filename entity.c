@@ -86,6 +86,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     if (entities_count == 0) {
       entity->id                             = entities_count;
       entity->health                         = health;
+      entity->active                         = true;
       entity->type                           = (entity_type_t)ENTITY_TYPE_PLAYER;
       entity->facing                         = entity_translate_facing(facing);
       entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };
@@ -105,6 +106,7 @@ void entities_load(entities_t *entities, entities_options_t *entities_options) {
     } else {
       entity->id                             = entities_count;
       entity->health                         = health;
+      entity->active                         = true;
       entity->type                           = (entity_type_t)ENTITY_TYPE_NPC;
       entity->facing                         = entity_translate_facing(facing);
       entity->physics.position               = (vector2_t){ .x = position_x, .y = position_y };

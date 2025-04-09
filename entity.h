@@ -66,6 +66,7 @@ typedef struct entity_player_t {
 typedef struct entity_t {
   int id;
   int health;
+  int active;
   entity_facing_t facing;
   entity_animation_t animation;
   entity_type_t type;

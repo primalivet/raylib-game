@@ -18,6 +18,7 @@ void physics_update(entities_t *entities, level_t *level) {
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
 
     // Apply direction from input
     if (entity->type == ENTITY_TYPE_PLAYER) {
@@ -89,6 +90,8 @@ void physics_update(entities_t *entities, level_t *level) {
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
+
     // Calculate proposed position
 
     // Get tile on all corners of proposed position X and Y
@@ -164,12 +167,14 @@ void physics_update(entities_t *entities, level_t *level) {
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
 
     // Entities collision response
     bool collision_entity_x = false;
     bool collision_entity_y = false;
     for (int j = 0; j < entities->entities_count; j++) {
       entity_t *other_entity = entities->entities[j];
+      if (!other_entity->active) continue;
       if (entity->id == other_entity->id) continue; // Skip self collision
       Rectangle proposed_aabb_x = (Rectangle){ .x = entity->physics.proposed_position.x, .y = entity->physics.position.y, 
         .width = entity->physics.aabb.width, .height = entity->physics.aabb.height };
@@ -180,9 +185,10 @@ void physics_update(entities_t *entities, level_t *level) {
       collision_entity_y = collision_entity_y || physics_intersect_rects(proposed_aabb_y, other_entity->physics.aabb);
     }
 
-    if (collision_entity_x || collision_entity_y) {
-      entity->health -= 2;
-    }
+    // TODO: Maybe enable "bump" damage
+    // if (collision_entity_x || collision_entity_y) {
+    //   entity->health -= 2;
+    // }
 
     // TODO: Move separation force collision response to own function
     // TODO: Introduce more behaviours and shooting as it will impact collision behaviour
@@ -215,15 +221,25 @@ void physics_update(entities_t *entities, level_t *level) {
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
     entity->physics.position = entity->physics.proposed_position; // Update position
     entity->physics.aabb.x = entity->physics.proposed_position.x; // Update AABB x
     entity->physics.aabb.y = entity->physics.proposed_position.y; // Update AABB y
   }
 
+  // Bullets
+
   for (int i = 0; i < entities->bullets_count; i++) {
     entity_bullet_t *bullet = entities->bullets[i];
 
     if (bullet->active == false) continue;
+
+    // Normalize direction
+    float length = sqrt(bullet->direction.x * bullet->direction.x + bullet->direction.y * bullet->direction.y);
+    if (length != 0.0f) {
+      bullet->direction.x /= length;
+      bullet->direction.y /= length;
+    }
 
     // Apply direction and speed to velocity
     bullet->velocity.x += bullet->direction.x * 1.5f;
@@ -239,6 +255,35 @@ void physics_update(entities_t *entities, level_t *level) {
     bullet->position = (vector2_t){ .x = bullet->position.x + bullet->velocity.x, 
                                     .y = bullet->position.y + bullet->velocity.y };
 
+    // Check bullet collision with world
+
+    int tile_idx = level->tilemap[(int)floor(bullet->position.y / level->tileset_tile_size)][(int)floor(bullet->position.x / level->tileset_tile_size)];
+    tiledef_t tiledef = level->tiledef[tile_idx];
+
+    if (tiledef.is_walkable == false) {
+      bullet->active = false; // Deactivate bullet
+    }
+
+
+    // Check bullet collision with entities
+    for (int j = 0; j < entities->entities_count; j++) {
+      entity_t *entity = entities->entities[j];
+      if (!entity->active) continue;
+      if (entity->type == ENTITY_TYPE_PLAYER) continue; // Skip player collision
+      if (physics_intersect_rects((Rectangle){ .x = bullet->position.x, .y = bullet->position.y, 
+        .width = 2.0f, .height = 2.0f }, entity->physics.aabb)) {
+        bullet->active = false; // Deactivate bullet
+        entity->health -= 1; // Damage entity
+      }
+    }
+  }
+
+  for (int i = 0; i < entities->entities_count; i++) {
+    entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
+    if (entity->health <= 0) {
+      entity->active = false;
+    }
   }
 }
 

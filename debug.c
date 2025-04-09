@@ -2,7 +2,7 @@
 #include <raylib.h>
 #include <stdio.h>
 
-void debug_draw(entities_t *entities, bool show_debug) {
+void debug_draw_info(entities_t *entities, bool show_debug) {
   if (!show_debug) return;
   // This function should be called after EndMode2D() to draw on top of the world
 
@@ -54,8 +54,27 @@ void debug_draw(entities_t *entities, bool show_debug) {
   sprintf(debugText, "Health: %d", entities->player->health);
   DrawText(debugText, debugBox.x + 10, y + lineHeight, 10, WHITE);
 
+  // Display player facing
+  sprintf(debugText, "Facing: %d", entities->player->facing);
+  DrawText(debugText, debugBox.x + 10, y + lineHeight * 2, 10, WHITE);
+}
+
+void debug_draw_overlay(entities_t *entities, bool show_debug) {
+  if (!show_debug) return;
+  // This function should be called after EndMode2D() to draw on top of the world
+
+  char debugText[128];
+
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];
+    if (!entity->active) continue;
+
+    // Draw health above the entity
+    if (entity->health > 0) {
+      sprintf(debugText, "%d", entity->health);
+      DrawText(debugText, entity->physics.position.x + (entity->physics.aabb.width / 2) - 5, 
+               entity->physics.position.y - 15, 10, WHITE);
+    }
 
     DrawRectangleLinesEx(entity->physics.aabb, 1, entity->color);
     vector2_t player_center = (vector2_t){ .x = entity->physics.position.x + (entity->physics.aabb.width / 2), 
