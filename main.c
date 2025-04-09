@@ -56,14 +56,13 @@ int main() {
     }
     input_update(&entities.player->player.input);
     physics_update(&entities, &level);
-    animation_update(entities.player);
+    animation_update(&entities);
     camera_update(&camera, &entities.player->physics.position);
     render_begin();
     camera_start(&camera);
 
     level_draw(&level);
-    animation_draw(entities.player);
-    entities_draw(&entities, show_debug);
+    animation_draw(&entities);
 
     camera_end();
     debug_draw(&entities, show_debug);

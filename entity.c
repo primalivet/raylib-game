@@ -18,15 +18,15 @@ static bool is_comment_line(const char *line) {
   return false;
 }
 
-void entity_load_player_animation(entity_t *entity) {
-  entity->player.animation.texture = LoadTexture("resources/player.png");
-  entity->player.animation.tile_size = 16;
-  entity->player.animation.frame_count = 4;
-  entity->player.animation.frame_counter = 0;
-  entity->player.animation.frame_current = 0;
-  entity->player.animation.frame_row = 1;
-  entity->player.animation.frames_per_update = 10;
-  entity->player.animation.current_clip = (Rectangle){ .x = 0, 
+void entity_load_animation(entity_t *entity, const char *texture_path) {
+  entity->animation.texture = LoadTexture(texture_path);
+  entity->animation.tile_size = 16;
+  entity->animation.frame_count = 4;
+  entity->animation.frame_counter = 0;
+  entity->animation.frame_current = 0;
+  entity->animation.frame_row = 1;
+  entity->animation.frames_per_update = 10;
+  entity->animation.current_clip = (Rectangle){ .x = 0, 
                                                        .y = 0, 
                                                        .width = 16, 
                                                        .height = 16 };
@@ -124,36 +124,27 @@ void entities_init(entities_t *entities, entities_options_t *entities_options) {
   entities->player = NULL;
 
   for (int i = 0; i < MAX_ENTITIES; i++) {
-    entities->enemies[i] = NULL;
+    entities->entities[i] = NULL;
   }
 
   for (int i = 0; i < MAX_ENTITIES - 1; i++) {
     entities->enemies[i] = NULL;
   }
 
+  for (int i = 0; i < MAX_BULLETS; i++) {
+    entities->bullets[i] = NULL;
+  }
+
   entities->enemies_count = 0;
   entities->entities_count = 0;
   entities_load(entities, entities_options);
-  entity_load_player_animation(entities->player);
-}
-
-void entities_draw(entities_t *entities, bool show_debug) {
-  entity_t *player = entities->player;
-
-  if (show_debug) {
-    DrawRectangleLinesEx(player->physics.aabb, 1, player->color);
-    vector2_t player_center = (vector2_t){ .x = player->physics.position.x + (player->physics.aabb.width / 2), 
-      .y = player->physics.position.y + (player->physics.aabb.height / 2) };
-    vector2_t player_dir_end = (vector2_t){ .x = player->physics.position.x + (player->physics.aabb.width / 2) + ((player->physics.aabb.width  / 2) * player->physics.direction.x),
-      .y = player->physics.position.y + (player->physics.aabb.height / 2) + ((player->physics.aabb.width / 2) * player->physics.direction.y) };
-
-    DrawLineV(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), player->color);
-  }
-
-
-  for (int i = 0; i < entities->enemies_count; i++) {
-    entity_t *enemy = entities->enemies[i];
-    DrawRectangleLinesEx(enemy->physics.aabb, 1, enemy->color);
+  for (int i = 0; i < entities->entities_count; i++) {
+    entity_t *entity = entities->entities[i];
+    if (entity->type == ENTITY_TYPE_PLAYER) {
+      entity_load_animation(entity,"resources/player.png");
+    } else {
+      entity_load_animation(entity,"resources/monster.png");
+    }
   }
 }
 
@@ -172,4 +163,11 @@ void entities_free(entities_t *entities) {
   entities->player = NULL;
   entities->enemies_count = 0;
   entities->entities_count = 0;
+
+  for (int i = 0; i < entities->bullets_count; i++) {
+    if (entities->bullets[i] != NULL) {
+      free(entities->bullets[i]);
+      entities->bullets[i] = NULL;
+    }
+  }
 }
