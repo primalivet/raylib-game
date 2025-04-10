@@ -5,6 +5,13 @@
 #include "level.h"
 #include "vector2.h"
 
+void physics_behavior_seek(entity_t *entity, vector2_t target) {
+  vector2_t desiered_velocity = (vector2_t){ .x = target.x - entity->physics.position.x, 
+                                             .y = target.y - entity->physics.position.y };
+  vector2_t seek_velocity = vector2_sub(desiered_velocity, entity->physics.velocity);
+  entity->physics.velocity = seek_velocity;
+}
+
 bool physics_intersect_rects(Rectangle a, Rectangle b) {
   return (a.x < b.x + b.width && // a.left is left of b.right
   a.x + a.width > b.x && // a.right is right of b.left
@@ -62,22 +69,16 @@ void physics_update(entities_t *entities, level_t *level) {
     }
 
     // Normalize direction
-    float length = sqrt(entity->physics.direction.x * entity->physics.direction.x + entity->physics.direction.y * entity->physics.direction.y);
-    if (length != 0.0f) {
-      entity->physics.direction.x /= length;
-      entity->physics.direction.y /= length;
-    }
+    entity->physics.direction = vector2_normalize(entity->physics.direction);
 
     // Apply direction and speed to velocity
-    entity->physics.velocity.x += entity->physics.direction.x * entity->physics.speed;
-    entity->physics.velocity.y += entity->physics.direction.y * entity->physics.speed;
+    entity->physics.velocity = vector2_add(entity->physics.velocity, 
+                                           vector2_mult_by_scalar(entity->physics.direction, entity->physics.speed));
 
     // Clamp velocity
-    float max_velocity = 2.0f; // Example maximum velocity (should be set on the physics_body?)
-    if (entity->physics.velocity.x > max_velocity) entity->physics.velocity.x = max_velocity;
-    if (entity->physics.velocity.x < -max_velocity) entity->physics.velocity.x = -max_velocity;
-    if (entity->physics.velocity.y > max_velocity) entity->physics.velocity.y = max_velocity;
-    if (entity->physics.velocity.y < -max_velocity) entity->physics.velocity.y = -max_velocity;
+    float max_velocity = 2.0f;
+    float min_velocity = -2.0f;
+    entity->physics.velocity = vector2_clamp(entity->physics.velocity, min_velocity, max_velocity);
 
     // Apply friction (down to but not under 0.0f, prevent sliding)
     if      (entity->physics.velocity.y < 0.0f) entity->physics.velocity.y = fmin(entity->physics.velocity.y + entity->physics.friction, 0.0f);
@@ -239,23 +240,16 @@ void physics_update(entities_t *entities, level_t *level) {
 
     if (bullet->active == false) continue;
 
-    // Normalize direction
-    float length = sqrt(bullet->direction.x * bullet->direction.x + bullet->direction.y * bullet->direction.y);
-    if (length != 0.0f) {
-      bullet->direction.x /= length;
-      bullet->direction.y /= length;
-    }
+    bullet->direction = vector2_normalize(bullet->direction);
 
     // Apply direction and speed to velocity
-    bullet->velocity.x += bullet->direction.x * 1.5f;
-    bullet->velocity.y += bullet->direction.y * 1.5f;
+    bullet->velocity = vector2_add(bullet->velocity, 
+                                   vector2_mult_by_scalar(bullet->direction, 1.5f));
 
     // Clamp velocity
-    float max_velocity = 3.0f; // Example maximum velocity (should be set on the physics_body?)
-    if (bullet->velocity.x > max_velocity) bullet->velocity.x = max_velocity;
-    if (bullet->velocity.x < -max_velocity) bullet->velocity.x = -max_velocity;
-    if (bullet->velocity.y > max_velocity) bullet->velocity.y = max_velocity;
-    if (bullet->velocity.y < -max_velocity) bullet->velocity.y = -max_velocity;
+    float min_velocity = -3.0f; 
+    float max_velocity = 3.0f; 
+    bullet->velocity = vector2_clamp(bullet->velocity, min_velocity, max_velocity);
 
     bullet->position = (vector2_t){ .x = bullet->position.x + bullet->velocity.x, 
                                     .y = bullet->position.y + bullet->velocity.y };

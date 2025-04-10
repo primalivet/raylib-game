@@ -58,6 +58,14 @@ vector2_t vector2_add_by_scalar(vector2_t a, float x)
   return div;
 }
 
+vector2_t vector2_clamp(vector2_t a, float min, float max) {
+  if (a.x > max) a.x = max;
+  if (a.x < min) a.x = min;
+  if (a.y > max) a.y = max;
+  if (a.y < min) a.y = min;
+  return a;
+}
+
 float vector2_euclidean_distance(vector2_t v1, vector2_t v2) 
 {
   float a = v2.x - v1.x;
