@@ -45,8 +45,12 @@ void physics_update(entities_t *entities, level_t *level) {
           if (entity->physics.direction.x == 0.0f && entity->physics.direction.y == 0.0f) {
             int random_x = rand() % 2;
             int random_y = rand() % 2;
+            if (random_x == 0 && random_y == 0) {
+              random_x = 1;
+            }
             entity->physics.direction.x = (float)random_x;
             entity->physics.direction.y = (float)random_y;
+
           }
           break;
         default:
@@ -64,12 +68,6 @@ void physics_update(entities_t *entities, level_t *level) {
       entity->physics.direction.y /= length;
     }
 
-    // Apply friction (down to but not under 0.0f, prevent sliding)
-    if      (entity->physics.velocity.y < 0.0f) entity->physics.velocity.y = fmin(entity->physics.velocity.y + entity->physics.friction, 0.0f);
-    else if (entity->physics.velocity.y > 0.0f) entity->physics.velocity.y = fmax(entity->physics.velocity.y - entity->physics.friction, 0.0f);
-    if      (entity->physics.velocity.x < 0.0f) entity->physics.velocity.x = fmin(entity->physics.velocity.x + entity->physics.friction, 0.0f);
-    else if (entity->physics.velocity.x > 0.0f) entity->physics.velocity.x = fmax(entity->physics.velocity.x - entity->physics.friction, 0.0f);
-
     // Apply direction and speed to velocity
     entity->physics.velocity.x += entity->physics.direction.x * entity->physics.speed;
     entity->physics.velocity.y += entity->physics.direction.y * entity->physics.speed;
@@ -80,6 +78,13 @@ void physics_update(entities_t *entities, level_t *level) {
     if (entity->physics.velocity.x < -max_velocity) entity->physics.velocity.x = -max_velocity;
     if (entity->physics.velocity.y > max_velocity) entity->physics.velocity.y = max_velocity;
     if (entity->physics.velocity.y < -max_velocity) entity->physics.velocity.y = -max_velocity;
+
+    // Apply friction (down to but not under 0.0f, prevent sliding)
+    if      (entity->physics.velocity.y < 0.0f) entity->physics.velocity.y = fmin(entity->physics.velocity.y + entity->physics.friction, 0.0f);
+    else if (entity->physics.velocity.y > 0.0f) entity->physics.velocity.y = fmax(entity->physics.velocity.y - entity->physics.friction, 0.0f);
+    if      (entity->physics.velocity.x < 0.0f) entity->physics.velocity.x = fmin(entity->physics.velocity.x + entity->physics.friction, 0.0f);
+    else if (entity->physics.velocity.x > 0.0f) entity->physics.velocity.x = fmax(entity->physics.velocity.x - entity->physics.friction, 0.0f);
+
 
     entity->physics.proposed_position = (vector2_t){ .x = entity->physics.position.x + entity->physics.velocity.x, 
                                                      .y = entity->physics.position.y + entity->physics.velocity.y };

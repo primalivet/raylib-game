@@ -64,8 +64,8 @@ int main() {
     camera_start(&camera);
 
     level_draw(&level);
-    animation_draw(&entities);
     bullets_draw(&entities);
+    animation_draw(&entities);
     debug_draw_overlay(&entities, show_debug);
 
     camera_end();
