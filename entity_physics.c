@@ -5,11 +5,16 @@
 #include "level.h"
 #include "vector2.h"
 
-void physics_behavior_seek(entity_t *entity, vector2_t target) {
-  vector2_t desiered_velocity = (vector2_t){ .x = target.x - entity->physics.position.x, 
-                                             .y = target.y - entity->physics.position.y };
-  vector2_t seek_velocity = vector2_sub(desiered_velocity, entity->physics.velocity);
-  entity->physics.velocity = seek_velocity;
+vector2_t physics_behavior_seek(entity_t *entity, vector2_t target) {
+  vector2_t desired = vector2_sub(target, entity->physics.position);
+            desired = vector2_normalize(desired);
+            desired = vector2_mult_by_scalar(desired, entity->physics.speed);
+  vector2_t steer = vector2_sub(desired, entity->physics.velocity);
+  float mag = vector2_magnitude(steer);
+  if (mag > 10.0f) {
+    steer = vector2_mult_by_scalar(vector2_normalize(steer), 10.0f);
+  }
+  return steer;
 }
 
 bool physics_intersect_rects(Rectangle a, Rectangle b) {
@@ -47,6 +52,13 @@ void physics_update(entities_t *entities, level_t *level) {
       }
     } else {
       switch(entity->npc.behaviour) {
+        case ENTITY_BEHAVIOUR_SEEK:
+            if (vector2_euclidean_distance(entity->physics.position, entities->player->physics.position) < 100.0f) {
+              vector2_t steer = physics_behavior_seek(entity, entities->player->physics.position);
+              entity->physics.velocity = vector2_add(entity->physics.velocity, steer);
+              entity->physics.direction = vector2_normalize(entity->physics.velocity);
+            }
+          break;
         case ENTITY_BEHAVIOUR_PATROL: 
           // TODO: update to more complex behaviour
           if (entity->physics.direction.x == 0.0f && entity->physics.direction.y == 0.0f) {
@@ -151,16 +163,15 @@ void physics_update(entities_t *entities, level_t *level) {
       } 
     } else {
       switch(entity->npc.behaviour) {
+        case ENTITY_BEHAVIOUR_SEEK: 
         case ENTITY_BEHAVIOUR_PATROL: 
           // TODO: update to more complex behaviour
           if (collision_world_x) {
             entity->physics.direction.x = -entity->physics.direction.x; // Invert direction
-            // entity->physics.velocity.x = -entity->physics.velocity.x; // Invert velocity
             entity->physics.proposed_position.x = entity->physics.position.x; // Reset proposed position X
           } 
           if (collision_world_y) {
             entity->physics.direction.y = -entity->physics.direction.y; // Invert direction
-            // entity->physics.velocity.y = -entity->physics.velocity.y; // Invert velocity
             entity->physics.proposed_position.y = entity->physics.position.y; // Reset proposed position Y
           } 
           break;
@@ -170,6 +181,8 @@ void physics_update(entities_t *entities, level_t *level) {
       }
     }
   }
+
+  // Check entity collision for all entities
 
   for (int i = 0; i < entities->entities_count; i++) {
     entity_t *entity = entities->entities[i];

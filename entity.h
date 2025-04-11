@@ -40,7 +40,8 @@ typedef struct entity_input_comp_t {
 
 typedef enum entity_behaviour_t {
   ENTITY_BEHAVIOUR_STATIONARY = 0,
-  ENTITY_BEHAVIOUR_PATROL = 1
+  ENTITY_BEHAVIOUR_PATROL = 1,
+  ENTITY_BEHAVIOUR_SEEK = 2
 } entity_behaviour_t;
 
 typedef enum entity_type_t {
