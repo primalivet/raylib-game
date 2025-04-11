@@ -82,7 +82,8 @@ void debug_draw_overlay(entities_t *entities, bool show_debug) {
     vector2_t player_dir_end = (vector2_t){ .x = entity->physics.position.x + (entity->physics.aabb.width / 2) + ((entity->physics.aabb.width  / 2) * entity->physics.direction.x),
       .y = entity->physics.position.y + (entity->physics.aabb.height / 2) + ((entity->physics.aabb.width / 2) * entity->physics.direction.y) };
 
-    DrawLineV(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), entity->color);
+    DrawLineEx(TO_RL_VEC2(player_center), TO_RL_VEC2(player_dir_end), 1, entity->color);
+
     for (int i = 0; i < entities->enemies_count; i++) {
       entity_t *enemy = entities->enemies[i];
       DrawRectangleLinesEx(enemy->physics.aabb, 1, enemy->color);
